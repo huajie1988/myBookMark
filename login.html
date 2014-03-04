@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-cn"><head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png"> -->
+    <script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/layer/layer.js"></script>
+    <title>用户登录</title>
+
+    <link href="./css/bootstrap.css" rel="stylesheet">
+
+    <!-- <link href="signin.css" rel="stylesheet"> -->
+  <style type="text/css"></style></head>
+
+  <body>
+
+    <div class="container">
+
+      <form class="form-signin" role="form" id="loginForm" method="post" action="">
+        <h2 class="form-signin-heading">请输入登录信息</h2>
+        <input type="text" class="form-control" placeholder="用户名/邮箱" name="userName" required="" autofocus="">
+        <div class="segmentation"></div>
+        <input type="password" name="password" class="form-control" placeholder="密码" required="">
+        <label class="checkbox">
+          <input type="checkbox" name="rememberMe" value="1">记住我
+          <span id="regDiv">
+            <a href="reg.html" style="float:right">还没账户，点击注册</a>  
+          </span>
+          <span id="forgetPassword" class="hidden">
+            <a href="forgetpassword.html" style="float:right">忘记密码</a>
+          </span>
+        </label>
+        <div class="segmentation"></div>
+        <input type="hidden" name="class" value="operate">
+        <input type="hidden" name="func" value="login">        
+        <button class="btn btn-lg btn-primary btn-block" id="sumbit" type="button">登录</button>
+      </form>
+
+    </div> <!-- /container -->
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("#sumbit").click(function(){
+              $.ajax({
+                 type: "POST",
+                 url: "/operate/controller.php",
+                 data: $("#loginForm").serialize(),
+                 dataType: "json",
+                 success: function(data){
+                    if(data.status==1){
+                        layer.alert(data.msg,5,!1);
+                    }else if(data.status==0){
+                        var index = parent.layer.getFrameIndex(window.name);
+                        parent.layer.msg(data.msg , 3, 1);
+                        setTimeout('parent.location.reload();',2000); 
+                        
+                    }else{
+                        layer.alert("系统错误",5,!1);
+                    }
+                }
+             });
+                // layer.alert('信息框演示二',5,!1);
+            });
+        });
+    </script>
+    
+
+</body>
+</html>

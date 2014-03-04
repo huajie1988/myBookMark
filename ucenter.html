@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>我的书签</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="./css/bootstrap.css">
+  </head>
+  <body>
+<nav class="navbar navbar-default" role="navigation">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="#"><b>我的书签</b></a>
+  </div>
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <form class="navbar-form navbar-right" role="search">
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search">
+      </div>
+      <button type="submit" class="btn btn-default">搜索</button>
+    </form>
+    <div id="loginAfter" class="hidden">
+      <ul class="nav navbar-nav navbar-right">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">我的帐户 <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">导出书签</a></li>
+            <li><a href="#">个人设置</a></li>
+            <li class="divider"></li>
+            <li><a href="javascript:void(0)" onclick="logout();">退出</a></li>
+          </ul>
+        </li>
+      </ul>  
+    </div>
+    <div id="loginBefore">
+      <ul class="nav navbar-nav  navbar-right">
+        <li onclick="login();"><a href="#">登录/注册</a></li>
+      </ul>
+    </div>
+  </div><!-- /.navbar-collapse -->
+</nav>
+<div class="container">
+      <div id="login" class="row row-offcanvas row-offcanvas-right">
+	     <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
+          <div class="list-group">
+
+          	<div class="panel panel-info">
+		        <div>
+			    <a href="#" class="list-group-item active">主页<span class="badge pull-right">42</span></a>
+	            <a href="#" class="list-group-item">归档<span class="badge pull-right">42</span></a>
+	            <a href="#" class="list-group-item">喜欢</a>
+		        </div>
+		    </div>
+
+	       <div class="panel panel-info">
+		        <div class="panel-heading">
+		          <h3 class="panel-title">收藏夹</h3>
+		        </div>
+		        <div>
+				    <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		            <a href="#" class="list-group-item">Link</a>
+		        </div>
+		    </div>
+
+		    <div class="panel panel-info">
+		        <div class="panel-heading">
+		          <h3 class="panel-title">我的标签云</h3>
+		        </div>
+		        <div>
+
+		        </div>
+		    </div>
+          </div>
+        </div><!--/span-->
+        <div class="col-xs-12 col-sm-9">
+          <p class="pull-right visible-xs">
+            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+          </p>
+          <!-- <h1>输入网址</h1> -->
+
+          <form method="post" action="">
+          	<div class="col-lg-12">
+  				    <div class="input-group input-group-lg">
+  				      <input type="text" id="addUrl" class="form-control">
+  				      <span class="input-group-btn">
+  				        <button class="btn btn-default" type="button" onclick="addMark();">Go!</button>
+  				      </span>
+  				    </div><!-- /input-group -->
+				    </div><!-- /.col-lg-6 -->
+          </form>
+
+          <div id="markcontents" class="hidden">
+            <div class="col-lg-6 segmentation" >
+            <input type="hidden" name="markUrl" class="form-control">
+            <input type="text" name="markTitle" class="form-control">
+            </div>
+            <div class="col-lg-6 segmentation" >
+            <input type="text" name="markKeyword" class="form-control">
+            </div>
+            <div class="col-lg-12 segmentation" >
+            <textarea class="form-control" name="markNote"></textarea>
+            </div>
+            <div class="col-lg-12 segmentation" >
+              <button class="btn btn-primary btn-lg btn-block" type="button" onclick="saveMark();">保存</button>
+            </div>
+          </div>
+
+          <div class="row" id="marklist">
+
+          </div><!--/row-->
+        </div><!--/span-->
+
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>© Company 2013</p>
+      </footer>
+
+    </div>
+    <script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./js/layer/layer.js"></script>
+    <script type="text/javascript" src="./js/bookmark.js"></script>
+    <script type="text/javascript">
+
+      $(document).ready(function(){
+        var username=getCookie('username');
+        var password=getCookie('password');
+
+          $.ajax({
+                 type: "POST",
+                 url: "/operate/controller.php",
+                 data: {userName:username, password:password,is_cookie:1,class:'operate',func:'login'},
+                 dataType: "json",
+                 success: function(data){
+                    if(data.status==0){
+                        $("#loginBefore").addClass("hidden");
+                        $("#loginAfter").removeClass("hidden");
+                        // $("#index").addClass("hidden");
+                        // $("#login").removeClass("hidden");
+                    }
+                    else{
+                      window.location.href='/';
+                    }
+                }
+             });
+          createMarkList(1);
+      });
+
+      function addMark(){
+        var url=$("#addUrl").val();
+        if(url=="" || url==null)
+            return false;
+        $.ajax({
+               type: "POST",
+               url: "/operate/controller.php",
+               data: {addUrl:url,class:'operate',func:'add'},
+               dataType: "json",
+               success: function(data){
+                  if(data.status==0){
+                    $("#markcontents").attr('class',"show");
+                    if(data.data.title==null)
+                      $("input[name=markTitle]").val(data.data.url);
+                    else
+                      $("input[name=markTitle]").val(data.data.title);
+                    $("input[name=markUrl]").val(data.data.url);
+                    $("input[name=markKeyword]").val(data.data.keywords);
+
+                  }
+                  else{
+                    alert(data.msg);
+                  }
+              }
+             });
+      }
+
+
+    function saveMark(){
+        var markTitle=$("input[name='markTitle']").val();
+        var markKeyword=$("input[name='markKeyword']").val();
+        var markNote=$("textarea[name='markNote']").val();
+        var markUrl=$("input[name='markUrl']").val();
+        if(markTitle=="" || markTitle==null){
+            alert("请输入书签标题");
+            return false;
+        }
+        $.ajax({
+               type: "POST",
+               url: "/operate/controller.php",
+               data: {url:markUrl,title:markTitle,keywords:markKeyword,note:markNote,class:'operate',func:'save'},
+               dataType: "json",
+               success: function(data){
+                  if(data.status==0){
+                     alert(data.msg);
+                     window.location.href='/ucenter.html';
+                  }
+                  else{
+                    alert(data.msg);
+                  }
+              }
+             });
+      }
+
+      function login()
+      {
+          $.layer({
+            type : 2,
+            title : '登录',
+            iframe : {src : './login.html'},
+            area : ['550px' , '330px'],
+            offset : ['100px','']
+            });
+      }
+
+      function logout(){
+        delCookie("username");
+        delCookie("password");
+        delCookie("status");
+        // location.reload();
+        window.location.href='/';
+      }
+
+      function getCookie(name)
+      {
+      var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+      if(arr=document.cookie.match(reg)) return unescape(arr[2]);
+      else return null;
+      }
+      function delCookie(name)//删除cookie
+      {
+          var exp = new Date();
+          exp.setTime(exp.getTime() - 1);
+          var cval=getCookie(name);
+          if(cval!=null) document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+      }
+    </script>
+  </body>
+</html>
