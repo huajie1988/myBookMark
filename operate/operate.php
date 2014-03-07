@@ -6,19 +6,23 @@ class operate{
 
 	public function login($args=array())
 	{
-		$userName=$args['userName'];
-		$password=$args['password'];
-		// common::error("请填写密码$userName");exit();
-		if(isset($args['rememberMe'])){
-			$time=time()+3600*24*14;
-		}else{
-			$time=time()+3600;
+		$userName="";
+		$password="";
+		$nologin_id=$this->createNologinId();		
+
+		if(isset($args['userName'])){
+			$userName=$args['userName'];
 		}
 
-		if(isset($args['is_cookie']) && $args['is_cookie']==1){
-			$password=$password;
+		if(isset($args['password'])){
+			$password=md5($args['password']);
+		}
+		
+		if(isset($args['rememberMe'])){
+			$time=time()+3600*24*14;
+			$nologin_id=$this->createNologinId('2',$userName);
 		}else{
-			$password=md5($password);
+			$time=time()+3600;
 		}
 
 		if(trim($userName)==""){
@@ -34,12 +38,42 @@ class operate{
 		if(!$ret){
 			common::error("用户不存在或用户名与密码不匹配");
 		}else{
+			$data_user['nologin_id']=$nologin_id;
+			$mark_user_obj->update($data_user,"id=".$ret[0]['id']);
 			setcookie("username", $ret[0]['username'], $time,"/");
-			setcookie("password", $ret[0]['password'], $time,"/");
+			setcookie("user_id", $ret[0]['id'], $time,"/");
+			setcookie("nologin_id", $nologin_id, $time,"/");
 			setcookie("status", $ret[0]['status'], $time,"/");
 			common::success("登录成功","/");
 		}
 	}
+
+	public function nologin($args=array())
+	{
+		$userName="";
+		$nologin_id=$this->createNologinId();		
+
+		if(isset($args['userName'])){
+			$userName=$args['userName'];
+		}
+
+		if(isset($args['nologin_id'])){
+			$nologin_id=$args['nologin_id'];
+		}
+
+		if(trim($userName)==""){
+			common::error("请填写用户名");
+		}
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->search("(email='".$userName."' OR username='".$userName."') AND nologin_id='".$nologin_id."'");
+		if(!$ret){
+			common::error("用户不存在");
+		}else{
+			common::success("登录成功","/");
+		}
+	}
+
 
 	public function getmark($args=array())
 	{
@@ -80,16 +114,12 @@ class operate{
 			{
 				$ret[$key]['tags']="";
 			}
+			if(strlen($val['title'])>100)
+			$ret[$key]['title']=mb_strcut($val['title'],0,72,"utf-8")."...";
+			if(strlen($val['note'])>100)
+			$ret[$key]['note']=mb_strcut($val['note'],0,50,"utf-8")."...";
 		}
-		
 
-		
-		// foreach ($ret as $key => $val) {
-		// 	if( isset($ret[$key+1]) && ($ret[$key+1]['id']==$ret[$key]['id'])){
-		// 		$ret[$key]['tags'].=",".$ret[$key+1]['tags'];
-		// 		common::array_remove($ret,$key+1);
-		// 	}	
-		// }
 		common::success("查询成功",$ret);
 	}
 
@@ -98,6 +128,7 @@ class operate{
 		$email=$args['email'];
 		$password=$args['password'];
 		$repassword=$args['repassword'];
+		$nologin_id=$this->createNologinId();
 
 		if(!$email){
 			common::error("请填写邮箱");
@@ -126,13 +157,15 @@ class operate{
 			"email"=>$email,
 			"password"=>md5($password),
 			"status"=>1,//未审核用户
+			"nologin_id"=>$nologin_id,
 			);
 
-		$mark_user_obj->add($data_user);
-
+		$user_id=$mark_user_obj->add($data_user);
+			
 		//写入cookie 必须加作用域"/" 2014/02/04 WHJ
 		setcookie("username", $email, time()+3600,"/");
-		setcookie("password", md5($password), time()+3600,"/");
+		setcookie("user_id", $user_id, $time,"/");
+		setcookie("nologin_id", $nologin_id, time()+3600,"/");
 		setcookie("status", 1, time()+3600,"/");
 
 
@@ -263,7 +296,81 @@ class operate{
 
 	public function getFavorite($args=array())
 	{
-		# code...
+		$where="";
+
+		if(isset($args['where']) && trim($args['where'])!=""){
+			$where=" AND ".$args['where'];
+		}
+
+		$userName=$_COOKIE['username'];
+
+		if(!$userName || trim($userName)==""){
+			common::error("请先登录") ;
+		}
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."')");
+
+		if(empty($ret))
+		{
+			common::error("用户不存在") ;
+		}
+
+
+		$mark_url_obj=new dbBaseCRUD("mark_favorites as a");
+		$queryArr= array(
+			'where' =>'a.user_id = '.$ret['id'] , 
+			'col'	=>'a.name,a.id,COUNT(favorites_id) as favNum',
+			'join'	=>'LEFT JOIN mark_url AS b ON a.id = b.favorites_id',
+			'group'	=>'a.name',
+			'order'	=>'a.create_time asc',
+			);
+		$ret=$mark_url_obj->query($queryArr);
+		common::success("查询成功",$ret);
+
+
+	}
+
+	private function createNologinId($type=1,$str="")
+	{
+		if($type=1)
+			$nologin_id=sha1(md5("mosquito".time()).$str);
+		else
+			$nologin_id=md5($time . mt_rand(1,1000000).$str);
+
+		return $nologin_id;
+	}
+
+
+	public function saveFavorite($args=array())
+	{
+		$favoriteName="";
+		$user_id=$_COOKIE['user_id'];
+		if(isset($args['favoriteName']))
+			$favoriteName=$args['favoriteName'];
+
+		if(trim($favoriteName)=="")
+			common::error("请输入收藏夹名称") ;
+
+		if(!isset($user_id)){
+			common::error("请先登录") ;
+		}
+
+		$data_fav=array(
+			'user_id'=>$user_id,
+			'name'=>$favoriteName,
+			'create_time'=>time(),
+			);
+
+		$mark_favorites_obj=new dbBaseCRUD("mark_favorites");
+		$mark_favorites=$mark_favorites_obj->searchone("name='".$favoriteName."' AND user_id=".$user_id);
+		if(!empty($mark_favorites)){
+			common::error("该收藏夹已经存在") ;
+		}
+		$favorites_id=$mark_favorites_obj->add($data_fav);
+		$data_fav['favorites_id']=$favorites_id;
+		common::success("新建成功",$data_fav);
+
 	}
 
 

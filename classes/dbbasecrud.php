@@ -12,7 +12,7 @@ class dbBaseCRUD
 		# code...
 		$root=$_SERVER['DOCUMENT_ROOT'];
 		$dbinfo=include($root."/config.php");
-		$dsn=$dbinfo['dbtype'].":dbname=".$dbinfo['dbname'].";host=".$dbinfo['dbhost'].";charset=utf-8";
+		$dsn=$dbinfo['dbtype'].":dbname=".$dbinfo['dbname'].";host=".$dbinfo['dbhost'].";";//charset=utf-8会链接错误，原因在查Huajie 2014/03/05
 		try {
 			$this->dbh = new PDO($dsn, $dbinfo['dbuser'], $dbinfo['dbpasswd'], array(PDO::ATTR_PERSISTENT => $ATTR_PERSISTENT));	
 			$this->dbh->query('set names utf8;');
@@ -48,7 +48,6 @@ class dbBaseCRUD
 		if($limit!="all"){
 			$SQL.=" LIMIT ".$limit;
 		}
-
 		$rs=$this->dbh->query($SQL);
 		$rs->setFetchMode(PDO::FETCH_ASSOC);
 		$result_arr = $rs->fetchAll();
@@ -57,7 +56,39 @@ class dbBaseCRUD
 
 	public function searchone($where,$col="*",$limit=1,$join="",$having="",$group="",$order=""){
 		$ret=$this->search($where,$col,$limit,$join,$having,$group,$order);
-		return $ret[0];
+		return empty($ret)?$ret:$ret[0];
+	}
+
+	public function query($args=array())
+	{
+		$where="1";
+		$col="*";
+		$limit=500;
+		$join="";
+		$having="";
+		$group="";
+		$order="";
+		if(!is_array($args)){
+			$args=array(
+				'content'=>"类".__CLASS__."中函数".__FUNCTION__.'传入的参数不正确！',
+				'logName'=>"error",
+				"path"=>$_SERVER['DOCUMENT_ROOT']."/",
+				);
+			log::createLog($args);
+			exit();
+		}
+		foreach ($args as $key => $val) {
+			$$key=$val;
+		}
+		return $this->search($where,$col,$limit,$join,$having,$group,$order);
+	}
+
+	public function querySql($SQL)
+	{
+		$rs=$this->dbh->query($SQL);
+		$rs->setFetchMode(PDO::FETCH_ASSOC);
+		$result_arr = $rs->fetchAll();
+		return $result_arr;
 	}
 
 	public function add($data){
@@ -74,8 +105,8 @@ class dbBaseCRUD
 		$value=trim($value,",");
 		$SQL="INSERT INTO ".$this->table." ($col) VALUES($value)";
 		$rs=$this->dbh->query($SQL);
+		$error=$this->dbh->errorInfo();		
 		$insertid=$this->dbh->lastInsertId();
-		$error=$this->dbh->errorInfo();
 		return $this->errorMsg($error,$insertid);
 	}
 
@@ -119,10 +150,10 @@ class dbBaseCRUD
 		else{
 			if(is_array($error)){
 				$error=implode(" ", $error);
-				return $error;
-			}else{
-				return $error;
 			}
+			$args=array("content"=>$error,"path"=>$_SERVER['DOCUMENT_ROOT']."/");
+			log::createLog($args);
+			exit();
 		}
 	}
 

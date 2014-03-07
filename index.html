@@ -107,12 +107,12 @@
 
       $(document).ready(function(){
         var username=getCookie('username');
-        var password=getCookie('password');
+        var nologin_id=getCookie('nologin_id');
 
           $.ajax({
                  type: "POST",
                  url: "/operate/controller.php",
-                 data: {userName:username, password:password,is_cookie:1,class:'operate',func:'login'},
+                 data: {userName:username, nologin_id:nologin_id,class:'operate',func:'nologin'},
                  dataType: "json",
                  success: function(data){
                     if(data.status==0){
@@ -127,39 +127,6 @@
           createMarkList(1);
       });
 
-
-
-      function login()
-      {
-          $.layer({
-            type : 2,
-            title : '登录',
-            iframe : {src : './login.html'},
-            area : ['550px' , '330px'],
-            offset : ['100px','']
-            });
-      }
-
-      function logout(){
-        delCookie("username");
-        delCookie("password");
-        delCookie("status");
-        location.reload();
-      }
-
-      function getCookie(name)
-      {
-      var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
-      if(arr=document.cookie.match(reg)) return unescape(arr[2]);
-      else return null;
-      }
-      function delCookie(name)//删除cookie
-      {
-          var exp = new Date();
-          exp.setTime(exp.getTime() - 1);
-          var cval=getCookie(name);
-          if(cval!=null) document.cookie= name + "="+cval+";expires="+exp.toGMTString();
-      }
     </script>
   </body>
 </html>

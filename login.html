@@ -54,7 +54,8 @@
                     }else if(data.status==0){
                         var index = parent.layer.getFrameIndex(window.name);
                         parent.layer.msg(data.msg , 3, 1);
-                        setTimeout('parent.location.reload();',2000); 
+                        // setTimeout('parent.location.reload();',2000);
+                        setTimeout("parent.location.href='/ucenter.html';",2000); 
                         
                     }else{
                         layer.alert("系统错误",5,!1);

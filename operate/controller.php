@@ -21,6 +21,7 @@ function classAutoLoad(){
 
 }
 spl_autoload_register('classAutoLoad');
+date_default_timezone_set('Asia/Shanghai');
 function my_scandir($dir)
 {
 	$files = array();
