@@ -49,9 +49,13 @@ class dbBaseCRUD
 			$SQL.=" LIMIT ".$limit;
 		}
 		$rs=$this->dbh->query($SQL);
-		$rs->setFetchMode(PDO::FETCH_ASSOC);
-		$result_arr = $rs->fetchAll();
-		return $result_arr;
+		$error=$this->dbh->errorInfo();
+		$error['errsql']=$SQL;
+		if($this->errorMsg($error,true)){
+			$rs->setFetchMode(PDO::FETCH_ASSOC);
+			$result_arr = $rs->fetchAll();
+			return $result_arr;
+		}
 	}
 
 	public function searchone($where,$col="*",$limit=1,$join="",$having="",$group="",$order=""){
@@ -69,12 +73,12 @@ class dbBaseCRUD
 		$group="";
 		$order="";
 		if(!is_array($args)){
-			$args=array(
+			$error=array(
 				'content'=>"类".__CLASS__."中函数".__FUNCTION__.'传入的参数不正确！',
-				'logName'=>"error",
+				'logName'=>"errorLog",
 				"path"=>$_SERVER['DOCUMENT_ROOT']."/",
 				);
-			log::createLog($args);
+			log::createLog($error);
 			exit();
 		}
 		foreach ($args as $key => $val) {
@@ -105,7 +109,8 @@ class dbBaseCRUD
 		$value=trim($value,",");
 		$SQL="INSERT INTO ".$this->table." ($col) VALUES($value)";
 		$rs=$this->dbh->query($SQL);
-		$error=$this->dbh->errorInfo();		
+		$error=$this->dbh->errorInfo();
+		$error['errorsql']=	$SQL;
 		$insertid=$this->dbh->lastInsertId();
 		return $this->errorMsg($error,$insertid);
 	}
@@ -128,6 +133,7 @@ class dbBaseCRUD
 		$SQL="UPDATE ".$this->table." SET $value WHERE $where";
 		$rs=$this->dbh->query($SQL);
 		$error=$this->dbh->errorInfo();
+		$error['errorsql']=$SQL;
 		return $this->errorMsg($error,"更新成功");
 	}
 
@@ -140,6 +146,7 @@ class dbBaseCRUD
 		$SQL="DELETE FROM ".$this->table." WHERE $where";
 		$rs=$this->dbh->query($SQL);
 		$error=$this->dbh->errorInfo();
+		$error['errorsql']=$SQL;
 		return $this->errorMsg($error,"删除成功");
 	}
 

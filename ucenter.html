@@ -73,7 +73,7 @@
 		        <div class="panel-heading">
 		          <h3 class="panel-title">我的标签云</h3>
 		        </div>
-		        <div>
+		        <div id="myTagsCloud">
 
 		        </div>
 		    </div>
@@ -111,7 +111,29 @@
               <button class="btn btn-primary btn-lg btn-block" type="button" onclick="saveMark();">保存</button>
             </div>
           </div>
-
+          <div id="operatePanel" style="display:none;" class="navbar navbar-default navbar-fixed-bottom font_like_a h_0">
+            <div class="col-lg-3 segmentation tc" data-type="All" onclick="selectAll(this);" >
+              全选
+            </div>
+            <div class="col-lg-3 segmentation tc" onclick="showFavoritePanel();">
+              <span>移至收藏夹</span>
+              <div id="selectfavdiv" data-show="false" style="display:none;">
+                <div class="panel panel-info">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">收藏夹</h3>
+                  </div>
+                  <div id="moveFavoriteList">
+                  </div>
+                  </div>
+                </div>
+            </div>
+            <div class="col-lg-3 segmentation tc" >
+              打标签
+            </div>
+            <div class="col-lg-3 segmentation tc" >
+              删除归档
+            </div>
+          </div>
           <div class="row" id="marklist">
 
           </div><!--/row-->
@@ -159,6 +181,7 @@
              });
           createMarkList(1);
           createFavoriteList();
+          createMyTagsCloud();
       });
 
       function addMark(){

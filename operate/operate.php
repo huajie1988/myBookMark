@@ -80,9 +80,10 @@ class operate{
 		$where="";
 
 		if(isset($args['where']) && trim($args['where'])!=""){
-			$where=" AND ".$args['where'];
-		}
+			$where=str_replace(" or ", " AND ", " AND ".strtolower($args['where']));
 
+		}
+		
 		$userName=$_COOKIE['username'];
 
 		if(!$userName || trim($userName)==""){
@@ -98,8 +99,15 @@ class operate{
 		}
 
 		$mark_url_obj=new dbBaseCRUD("mark_url AS a");
-		// $join="LEFT JOIN mark_url_tag AS c ON c.url_id=a.id LEFT JOIN mark_tag AS b ON b.id=c.tag_id";
-		$ret=$mark_url_obj->search("user_id=".$ret['id'].$where," a.*","all");
+		$args=array(
+			'join'=>"LEFT JOIN mark_url_tag AS b ON b.url_id=a.id",
+			'where'=>"user_id=".$ret['id'].$where,
+			'col'=>" a.*",
+			'limit'=>"all",
+			'group'=>"a.id"
+			);
+		
+		$ret=$mark_url_obj->query($args);
 		$mark_tag_obj=new dbBaseCRUD("mark_url_tag AS a");
 		foreach ($ret as $key => $val) {
 			$name="";
@@ -115,7 +123,7 @@ class operate{
 				$ret[$key]['tags']="";
 			}
 			if(strlen($val['title'])>100)
-			$ret[$key]['title']=mb_strcut($val['title'],0,72,"utf-8")."...";
+			$ret[$key]['title']=mb_strcut($val['title'],0,70,"utf-8")."...";
 			if(strlen($val['note'])>100)
 			$ret[$key]['note']=mb_strcut($val['note'],0,50,"utf-8")."...";
 		}
@@ -322,6 +330,7 @@ class operate{
 			'where' =>'a.user_id = '.$ret['id'] , 
 			'col'	=>'a.name,a.id,COUNT(favorites_id) as favNum',
 			'join'	=>'LEFT JOIN mark_url AS b ON a.id = b.favorites_id',
+			'limit'=>'10',
 			'group'	=>'a.name',
 			'order'	=>'a.create_time asc',
 			);
@@ -345,14 +354,17 @@ class operate{
 	public function saveFavorite($args=array())
 	{
 		$favoriteName="";
-		$user_id=$_COOKIE['user_id'];
+		$user_id=0;
 		if(isset($args['favoriteName']))
 			$favoriteName=$args['favoriteName'];
+
+		if(isset($_COOKIE['user_id']))
+			$user_id=intval($_COOKIE['user_id']);
 
 		if(trim($favoriteName)=="")
 			common::error("请输入收藏夹名称") ;
 
-		if(!isset($user_id)){
+		if($user_id==0){
 			common::error("请先登录") ;
 		}
 
@@ -372,6 +384,101 @@ class operate{
 		common::success("新建成功",$data_fav);
 
 	}
+
+
+	public function move2Favorite($args)
+	{
+		$mark_ids=array();
+		$favorite_id="";
+
+		if(isset($args['mark_id'])){
+			$mark_ids=$args['mark_id'];
+		}
+
+		if(isset($args['favorite_id'])){
+			$favorite_id=intval($args['favorite_id']);
+		}
+
+		if(empty($mark_ids)){
+			common::error("请选择书签");
+		}
+
+		if(trim($favorite_id)=="" || $favorite_id==0){
+			common::error("请选择收藏夹");
+		}
+
+		$user_id=intval($_COOKIE['user_id']);
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		$mark_ids="(".trim(implode(",", $mark_ids),",").")";
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("id=$user_id");
+
+		if(empty($ret))
+		{
+			common::error("用户不存在") ;
+		}
+
+		$data['favorites_id']=$favorite_id;
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$mark_url_obj->update($data,"id IN $mark_ids");
+		common::success("保存成功");
+	}
+
+
+	public function createMyTagsCloud($args=array())
+	{
+		$userName="";
+		$nologin_id=$this->createNologinId();	
+		$user_id="";
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}	
+
+		if(isset($_COOKIE['username'])){
+			$userName=$_COOKIE['username'];
+		}
+
+		if(isset($_COOKIE['nologin_id'])){
+			$nologin_id=$_COOKIE['nologin_id'];
+		}
+
+		if(trim($userName)==""){
+			common::error("请填写用户名");
+		}
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."') AND nologin_id='".$nologin_id."'");
+
+		if(empty($ret)){
+			common::error("用户不存在");
+		}
+
+		$mark_tag_obj=new dbBaseCRUD("mark_tag as a");
+		$queryArr= array(
+			'where' =>'c.user_id = '.$ret['id'] , 
+			'col'	=>'a.id,a.name,count(c.id) AS weights',
+			'join'	=>'LEFT JOIN mark_url_tag as b ON a.id=b.tag_id LEFT JOIN mark_url as c ON c.id=b.url_id',
+			'group'	=>'a.name',
+			);
+		$ret=$mark_tag_obj->query($queryArr);
+
+		foreach ($ret as $key => &$val) {
+			$val['name']=mb_strcut($val['name'],0,30,"utf-8");
+		}
+		shuffle($ret);
+		common::success("查询成功",$ret);
+	}
+
 
 
 }

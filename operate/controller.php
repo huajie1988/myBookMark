@@ -11,10 +11,14 @@ function classAutoLoad(){
 	foreach ($class_path as $key => $val) {
 			$filenamenow=substr( $_SERVER['PHP_SELF'] , strrpos($_SERVER['PHP_SELF'] , '/')+1 );
 			foreach (my_scandir($root.$val) as $key2 => $val2) {
-
-					$filename=$root.$val."/$val2";
-					if (file_exists($filename) && $val2!=$filenamenow) {
-					    require("$filename");
+					if(!is_array($val2)){
+						$filename=$root.$val."/$val2";
+						if (file_exists($filename) && $val2!=$filenamenow) {
+						    require("$filename");
+						}
+					}else{
+						//暂时不准备将操作类里面添加其他辅助类，可以将需要的类放在classes里面
+						// 20140311 Huajie
 					}
 			}
 	}
@@ -32,7 +36,7 @@ function my_scandir($dir)
 		{
 			if ( is_dir($dir . "/" . $file) ) 
 			{
-				$files[$file] = my_scandir1($dir . "/" . $file);
+				$files[$file] = my_scandir($dir . "/" . $file);
 			}
 			else 
 			{
