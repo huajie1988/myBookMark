@@ -54,9 +54,9 @@
 
           	<div class="panel panel-info">
 		        <div>
-			    <a href="/ucenter.html" class="list-group-item active">主页<span class="badge pull-right">42</span></a>
-	            <a href="#" class="list-group-item">归档<span class="badge pull-right">42</span></a>
-	            <a href="#" class="list-group-item">喜欢</a>
+			    <a href="/ucenter.html" id="home" class="list-group-item active">主页<!-- <span class="badge pull-right">42</span> --></a>
+	            <a href="javascript:void(0);" id="file" onclick="getMarkByDate();" class="list-group-item">归档<!-- <span class="badge pull-right">42</span> --></a>
+	            <a href="javascript:void(0);" id="is_like" class="list-group-item" onclick="searchMark('like',-1);">喜欢</a>
 		        </div>
 		    </div>
 
@@ -131,7 +131,7 @@
               打标签
             </div>
             <div class="col-lg-3 segmentation tc" >
-              删除归档
+              <span onclick="delMark();">删除归档</span>
             </div>
           </div>
           <div class="row" id="marklist">

@@ -101,13 +101,14 @@ class operate{
 		$mark_url_obj=new dbBaseCRUD("mark_url AS a");
 		$args=array(
 			'join'=>"LEFT JOIN mark_url_tag AS b ON b.url_id=a.id",
-			'where'=>"user_id=".$ret['id'].$where,
+			'where'=>"user_id=".$ret['id']." AND status=1 ".$where,
 			'col'=>" a.*",
 			'limit'=>"all",
 			'group'=>"a.id"
 			);
 		
 		$ret=$mark_url_obj->query($args);
+
 		$mark_tag_obj=new dbBaseCRUD("mark_url_tag AS a");
 		foreach ($ret as $key => $val) {
 			$name="";
@@ -267,6 +268,7 @@ class operate{
 		$data_mark=array(
 			"url"=>$url,
 			"title"=>$title,
+			"status"=>1,
 			"user_id"=>$ret[0]['id'],
 			"createtime"=>time(),
 			"note"=>$note,
@@ -329,7 +331,7 @@ class operate{
 		$queryArr= array(
 			'where' =>'a.user_id = '.$ret['id'] , 
 			'col'	=>'a.name,a.id,COUNT(favorites_id) as favNum',
-			'join'	=>'LEFT JOIN mark_url AS b ON a.id = b.favorites_id',
+			'join'	=>'LEFT JOIN (select * from  mark_url where status=1) AS b ON a.id = b.favorites_id',
 			'limit'=>'10',
 			'group'	=>'a.name',
 			'order'	=>'a.create_time asc',
@@ -467,18 +469,220 @@ class operate{
 		$queryArr= array(
 			'where' =>'c.user_id = '.$ret['id'] , 
 			'col'	=>'a.id,a.name,count(c.id) AS weights',
-			'join'	=>'LEFT JOIN mark_url_tag as b ON a.id=b.tag_id LEFT JOIN mark_url as c ON c.id=b.url_id',
+			'join'	=>'LEFT JOIN mark_url_tag as b ON a.id=b.tag_id LEFT JOIN (select * from  mark_url where status=1) as c ON c.id=b.url_id',
 			'group'	=>'a.name',
 			);
 		$ret=$mark_tag_obj->query($queryArr);
 
 		foreach ($ret as $key => &$val) {
-			$val['name']=mb_strcut($val['name'],0,30,"utf-8");
+			$val['name']=mb_strcut(htmlentities($val['name']),0,30,"utf-8");
 		}
 		shuffle($ret);
 		common::success("查询成功",$ret);
 	}
 
+	public function saveTags($args=array())
+	{
+		$url_id="";	
+		$user_id="";
+		$tags="";
+		$tagArr=array();
 
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['url_id'])){
+			$url_id=intval($args['url_id']);
+		}
+
+		if(isset($args['tags'])){
+			$tags=$args['tags'];
+		}
+
+		$tags=str_replace("，", ",", $tags);
+
+		if(trim($tags)!=""){
+			$tagArr=explode(",", $tags);
+		}
+
+		if(count($tagArr)>10){
+			common::error("标签数量请小于10个") ;
+		}
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->searchone("id=$url_id AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+
+
+		$mark_url_tag_obj = new dbBaseCRUD("mark_url_tag");
+		$mark_url_tag_obj->delete("url_id=$url_id");
+
+		$mark_tag_obj=new dbBaseCRUD("mark_tag");
+		$tag_id=0;
+		foreach ($tagArr as $key => $val) {			
+			$ret_tag=$mark_tag_obj->searchone("name='$val'");
+
+			if(!empty($ret_tag)){
+				$tag_id=$ret_tag['id'];
+			}else{
+				$data_tag=array(
+					'name'=>"$val",
+					);
+				$tag_id=$mark_tag_obj->add($data_tag);
+			}
+
+			$data_url_tag=array(
+				"url_id"=>"$url_id",
+				"tag_id"=>"$tag_id",
+				);
+			$mark_url_tag_obj->add($data_url_tag);
+		}
+
+		// print_r("修改成功");exit();
+		common::success("修改成功",$ret);
+
+	}
+
+	public function changeLike($args=array())
+	{
+		$url_id="";	
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['url_id'])){
+			$url_id=intval($args['url_id']);
+		}
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->searchone("id=$url_id AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		$is_like=0;
+
+		if($ret['is_like']==0 || trim($ret['is_like'])=="" || $ret['is_like']==null){
+			$is_like=1;
+		}
+
+		$data=array("is_like"=>$is_like);
+		$mark_url_obj->update($data,"id=$url_id AND user_id=$user_id");
+		// print_r("修改成功");exit();
+		$ret['is_like']=$is_like;
+		common::success("修改成功",$ret);
+
+	}
+
+	public function changePrivate($args=array())
+	{
+		$url_id="";	
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['url_id'])){
+			$url_id=intval($args['url_id']);
+		}
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->searchone("id=$url_id AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		$is_private=0;
+
+		if($ret['is_private']==0 || trim($ret['is_private'])=="" || $ret['is_private']==null){
+			$is_private=1;
+		}
+
+		$data=array("is_private"=>$is_private);
+		$mark_url_obj->update($data,"id=$url_id AND user_id=$user_id");
+		// print_r("修改成功");exit();
+		$ret['is_private']=$is_private;
+		common::success("修改成功",$ret);
+
+	}
+
+	public function getMarkByDate($args=array())
+	{
+		$url_id="";	
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$data_where=array(
+			"col"=>" count(id) as markNum,FROM_UNIXTIME(createtime,'%Y年%m月') as month,FROM_UNIXTIME(createtime,'%y年%m月') as month_short",
+			"where"=>"user_id=$user_id",
+			"group"=>"FROM_UNIXTIME(createtime,'%Y年%m月')",
+			"limit"=>"all",
+			);
+		$ret=$mark_url_obj->query($data_where);
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		common::success("修改成功",$ret);
+
+	}
+
+	public function delMark($args=array())
+	{
+		$mark_id="";	
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['mark_id'])){
+			$mark_id=$args['mark_id'];
+		}
+		$mark_ids=implode(",", $mark_id);
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->search("id IN ($mark_ids) AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		$data=array("status"=>2);
+		$mark_url_obj->update($data,"id IN ($mark_ids) AND user_id=$user_id");
+		common::success("修改成功",$ret);
+
+	}
 
 }

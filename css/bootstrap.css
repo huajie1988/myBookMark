@@ -7252,3 +7252,52 @@ td.visible-print {
   font-size: 23px;
   font-weight: bold;
 }
+.input_transparent{
+  background:transparent;
+  border:1px solid #ffffff;
+}
+.star{
+  background:url(../images/star.gif) 0px 0px no-repeat;
+  width: 30px;
+  height:30px;
+  float: left; 
+  margin-right:10px;
+ }
+
+ span.star:hover{
+  background:url(../images/star.gif) 0px -60px no-repeat;
+  width: 30px;
+  height:30px;
+  float: left; 
+  margin-right:10px;
+ }
+ .star_like{
+  background:url(../images/star.gif) 0px -60px no-repeat;
+  width: 30px;
+  height:30px;
+  float: left; 
+  margin-right:10px;
+ }
+
+.unlock{
+  background:url(../images/lock.png) 0px -32px no-repeat;
+  width: 32px;
+  height:32px;
+  float: left; 
+  margin-right:10px;
+ }
+
+span.unlock:hover{
+  background:url(../images/lock.png) 0px 0px no-repeat;
+  width: 32px;
+  height:32px;
+  float: left; 
+  margin-right:10px;
+ }
+.locked{
+  background:url(../images/lock.png) 0px 0px no-repeat;
+  width: 32px;
+  height:32px;
+  float: left; 
+  margin-right:10px;
+ }
