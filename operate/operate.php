@@ -378,9 +378,15 @@ class operate{
 
 		$mark_favorites_obj=new dbBaseCRUD("mark_favorites");
 		$mark_favorites=$mark_favorites_obj->searchone("name='".$favoriteName."' AND user_id=".$user_id);
+		$mark_favNum=$mark_favorites_obj->searchone(" user_id=".$user_id,"count(*) as favNum");
 		if(!empty($mark_favorites)){
 			common::error("该收藏夹已经存在") ;
 		}
+
+		if($mark_favNum['favNum']>=10){
+			common::error("收藏夹请不大于10个") ;
+		}
+
 		$favorites_id=$mark_favorites_obj->add($data_fav);
 		$data_fav['favorites_id']=$favorites_id;
 		common::success("新建成功",$data_fav);
@@ -473,10 +479,12 @@ class operate{
 			'group'	=>'a.name',
 			);
 		$ret=$mark_tag_obj->query($queryArr);
-
+		
 		foreach ($ret as $key => &$val) {
-			$val['name']=mb_strcut(htmlentities($val['name']),0,30,"utf-8");
+			$val['name']=mb_strcut(htmlentities($val['name'],ENT_QUOTES ,"UTF-8"),0,30,"utf-8");			
+			// $val['name']=mb_strcut($val['name'],0,30,"utf-8");
 		}
+		// print_r($ret);exit();
 		shuffle($ret);
 		common::success("查询成功",$ret);
 	}

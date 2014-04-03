@@ -7,11 +7,16 @@ class dbBaseCRUD
 {
 	private $dbh;
 	private $table;
+	private $error_user;
 	function __construct($table,$ATTR_PERSISTENT=true)
 	{
 		# code...
 		$root=$_SERVER['DOCUMENT_ROOT'];
 		$dbinfo=include($root."/config.php");
+		$error_user=array(
+		'logName'=>"errorLog",
+		"path"=>$root."/",
+		);
 		$dsn=$dbinfo['dbtype'].":dbname=".$dbinfo['dbname'].";host=".$dbinfo['dbhost'].";";//charset=utf-8会链接错误，原因在查Huajie 2014/03/05
 		try {
 			$this->dbh = new PDO($dsn, $dbinfo['dbuser'], $dbinfo['dbpasswd'], array(PDO::ATTR_PERSISTENT => $ATTR_PERSISTENT));	
@@ -19,6 +24,8 @@ class dbBaseCRUD
 			$this->table=$table;
 			return $this->dbh;
 		} catch (PDOException $e) {
+			$error_user['content']=$e->getMessage();
+			log::createLog($error_user);
 		    die ("Error!: " . $e->getMessage() . "<br/>");
 		}
 	}
@@ -26,7 +33,9 @@ class dbBaseCRUD
 	public function search($where,$col="*",$limit=500,$join="",$having="",$group="",$order=""){
 		
 		if(trim($where)==""){
-			echo "搜索条件不能为空";
+			$error_user['content']="搜索条件不能为空";
+			log::createLog($error_user);
+			exit();
 		}
 		if(is_array($col)){
 			$col=implode(",", $col);
@@ -73,12 +82,8 @@ class dbBaseCRUD
 		$group="";
 		$order="";
 		if(!is_array($args)){
-			$error=array(
-				'content'=>"类".__CLASS__."中函数".__FUNCTION__.'传入的参数不正确！',
-				'logName'=>"errorLog",
-				"path"=>$_SERVER['DOCUMENT_ROOT']."/",
-				);
-			log::createLog($error);
+			$error_user['content']="类".__CLASS__."中函数".__FUNCTION__.'传入的参数不正确！';
+			log::createLog($error_user);
 			exit();
 		}
 		foreach ($args as $key => $val) {
@@ -97,7 +102,9 @@ class dbBaseCRUD
 
 	public function add($data){
 		if(empty($data)){
-			echo "插入的数据不能为空";
+			$error_user['content']="插入的数据不能为空";
+			log::createLog($error_user);
+			exit();
 		}
 		$col="";
 		$value="";
@@ -117,11 +124,15 @@ class dbBaseCRUD
 
 	public function update($data,$where){
 		if(empty($data)){
-			echo "更新的数据不能为空";
+			$error_user['content']="更新的数据不能为空";
+			log::createLog($error_user);
+			exit();
 		}
 
 		if(trim($where)==""){
-			echo "更新条件不能为空";
+			$error_user['content']="更新条件不能为空";
+			log::createLog($error_user);
+			exit();
 		}
 
 		$value="";
@@ -140,7 +151,9 @@ class dbBaseCRUD
 	public function delete($where){
 
 		if(trim($where)==""){
-			echo "删除条件不能为空";
+			$error_user['content']="删除条件不能为空";
+			log::createLog($error_user);
+			exit();
 		}
 
 		$SQL="DELETE FROM ".$this->table." WHERE $where";

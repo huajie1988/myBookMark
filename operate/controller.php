@@ -1,8 +1,11 @@
 <?php
 
+$find = array("<script","</script");
+$replace = array("");
+
 $class=$_REQUEST['class'];
 $func=$_REQUEST['func'];
-$args=$_REQUEST;
+$args=str_replace($find,$replace,$_REQUEST);
 
 function classAutoLoad(){
 	$root=$_SERVER['DOCUMENT_ROOT'];
