@@ -7301,3 +7301,44 @@ span.unlock:hover{
   float: left; 
   margin-right:10px;
  }
+ 
+.edit{
+  width: 25px;
+  height:25px;
+ }
+ 
+.delete{
+  width: 20px;
+  height:20px;
+  margin-left: 20px;
+ }
+ 
+.add{
+  background:url(../images/add.png) 0px 0px no-repeat;
+  width: 24px;
+  height:24px; 
+  margin-top:-3px;
+ }
+ 
+.squared_1_4{
+	width: 65px;
+  	height:65px;
+  	background-color: red; 
+}
+
+.squared_1_1{
+	width: 130px;
+  	height:130px; 
+	background-color: blue;
+}
+
+.squared_2_1{
+	width: 260px;
+  	height:130px; 
+  	background-color: #000;
+}
+
+#sendBefore img{
+	width: 60px;
+  	height:60px; 
+}

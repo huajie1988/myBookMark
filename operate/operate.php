@@ -194,58 +194,46 @@ class operate{
 		// curl_setopt($ch, CURLOPT_USERPWD, US_NAME.":".US_PWD); 
 		$contents = curl_exec($ch); 
 		curl_close($ch);
-
-		if($contents){
-
-
-			//开始处理
-
-			$charset="UTF-8";
-			preg_match('/<meta.+http-equiv="Content-Type"(.*)(charset=[\"|\']?\S*[\"|\']?).+>/i',strtolower($contents),$matches); 
-			if(!empty($matches)){
-				$tmp_attr=explode("=", $matches[count($matches)-1]);
-				$tmp_attr=explode("\"", $tmp_attr[1]);
-				$charset=$tmp_attr[0];
-			}else{
-				preg_match('/<meta.+?charset=[^\w]?([-\w]+)/i',$contents,$matches);
-				if(!empty($matches)){
-				$tmp_attr=explode("=", $matches[count($matches)-1]);
-				$tmp_attr=explode("\"", $tmp_attr[1]);
-				$charset=$tmp_attr[1];	
-				}
+//		下面的try catch暂时无用
+	try {
+			if($contents){
+	
+	
+				//开始处理
+	
+				$title='';
+				preg_match_all("/<title.*>(.*)<\/title>/isU", strtolower($contents), $matches); 
+				$matches=array_filter($matches);
 				
+				if(!empty($matches)){
+					
+					mb_convert_encoding($contents, "UTF-8");
+					$tmp_attr=explode("title", $contents);				
+					$tmp_attr=explode(">", $tmp_attr[1]);
+					$tmp_attr=explode("<", $tmp_attr[1]);				
+					$title=$tmp_attr[0];
+				}
+	
+	
+	
+				if(trim($title)=="")
+					$title=$url;
+	
+				preg_match('/<meta.+name="keywords"(.*)(content=[\"|\']?\S*[\"|\']?).+>/i',strtolower($contents),$matches); 
+				$keywords="";
+				if(!empty($matches)){
+					$tmp_attr=str_replace("'","\"",mb_convert_encoding($matches[count($matches)-1], "UTF-8"));
+					$tmp_attr=explode("\"", $tmp_attr);
+					$keywords=$tmp_attr[1];
+	
+				}
+				$data=array('title'=>mb_convert_encoding($title, "UTF-8"),'keywords'=>$keywords,'url'=>$url);
+				common::success("查找成功",$data);
+			}else{
+				common::error("查找失败");
 			}
-
-
-			$title='';
-			preg_match_all("/<title.*>(.*)<\/title>/isU", strtolower($contents), $matches); 
-			$matches=array_filter($matches);
-			
-			if(!empty($matches)){
-				iconv($charset, "UTF-8", $contents);
-				$tmp_attr=explode("title", $contents);				
-				$tmp_attr=explode(">", $tmp_attr[1]);
-				$tmp_attr=explode("<", $tmp_attr[1]);				
-				$title=$tmp_attr[0];
-			}
-
-
-
-			if(trim($title)=="")
-				$title=$url;
-
-			preg_match('/<meta.+name="keywords"(.*)(content=[\"|\']?\S*[\"|\']?).+>/i',strtolower($contents),$matches); 
-			$keywords="";
-			if(!empty($matches)){
-				$tmp_attr=str_replace("'","\"",iconv($charset, "UTF-8", $matches[count($matches)-1]));
-				$tmp_attr=explode("\"", $tmp_attr);
-				$keywords=$tmp_attr[1];
-
-			}
-			$data=array('title'=>iconv($charset, "UTF-8", $title),'keywords'=>$keywords,'url'=>$url);
-			common::success("查找成功",$data);
-		}else{
-			common::error("查找失败");
+		}catch (Exception $e) {
+			echo $e->getMessage();
 		}
 	}
 
@@ -691,6 +679,89 @@ class operate{
 		$mark_url_obj->update($data,"id IN ($mark_ids) AND user_id=$user_id");
 		common::success("修改成功",$ret);
 
+	}
+
+
+	public function favoriteChangeSave($args)
+	{
+		$favorite_id="";
+		$favoriteName="";
+
+		if(isset($args['favorite_id'])){
+			$favorite_id=intval($args['favorite_id']);
+		}
+		
+		if(isset($args['favoriteName'])){
+			$favoriteName=trim($args['favoriteName']);
+		}
+		
+		if(trim($favorite_id)=="" || $favorite_id==0){
+			common::error("请选择收藏夹");
+		}
+		
+		if(trim($favoriteName)==""){
+			common::error("请输入收藏夹名");
+		}
+		
+		$user_id=intval($_COOKIE['user_id']);
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("id=$user_id");
+
+		if(empty($ret))
+		{
+			common::error("用户不存在") ;
+		}
+
+
+		$data['name']=$favoriteName;
+		$mark_favorites_obj=new dbBaseCRUD("mark_favorites");
+		$mark_favorites_obj->update($data,"id = $favorite_id");
+		common::success("修改成功");
+	}
+
+	public function deleteFavorite($args)
+	{
+		$favorite_id="";
+
+		if(isset($args['favorite_id'])){
+			$favorite_id=intval($args['favorite_id']);
+		}
+		
+		
+		if(trim($favorite_id)=="" || $favorite_id==0){
+			common::error("请选择收藏夹");
+		}
+		
+		
+		$user_id=intval($_COOKIE['user_id']);
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("id=$user_id");
+
+		if(empty($ret))
+		{
+			common::error("用户不存在") ;
+		}
+
+		$mark_favorites_obj=new dbBaseCRUD("mark_favorites");
+		$mark_favorites_obj->delete("id = $favorite_id");
+		
+		$data['favorites_id']=0;
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$mark_url_obj->update($data,"favorites_id = $favorite_id");
+		
+		common::success("删除成功");
 	}
 
 }

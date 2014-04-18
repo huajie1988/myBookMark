@@ -62,7 +62,7 @@
 
 	       <div class="panel panel-info">
 		        <div class="panel-heading">
-		          <h3 class="panel-title">收藏夹<a href="javascript:void(0);" onclick="createFavorite(this);" id="addFavorite" data-value="true"><span class="fr fontsmall">add</span></a></h3>
+		          <h3 class="panel-title"><span><a href="javascript:void(0);" onclick="createFavoriteChangeList();">收藏夹</a></span><a href="javascript:void(0);" onclick="createFavorite(this);" id="addFavorite" data-value="true"><span class="fr add"></span></a></h3>
 		        </div>
 		        <div id="favorite">
               <div class="list-group-item" style="display:none;" ><input type="text" id="favoriteName" name="favoriteName" class="form-control" value=""><button class="btn btn-sm btn-primary btn-block segmentation" id="sumbit" type="button" onclick="saveFavorite(this);">保存</button></div>
@@ -95,7 +95,8 @@
   				    </div><!-- /input-group -->
 				    </div><!-- /.col-lg-6 -->
           </form>
-
+		  <div id="sendBefore" >
+		  </div>
           <div id="markcontents" class="hidden">
             <div class="col-lg-6 segmentation" >
             <input type="hidden" name="markUrl" class="form-control">
@@ -193,21 +194,41 @@
                url: "/operate/controller.php",
                data: {addUrl:url,class:'operate',func:'add'},
                dataType: "json",
+               timeout: 60000,
+               beforeSend:function(){
+               	$("#markcontents").attr('class',"hidden");
+               	$("#sendBefore").html('<div class="col-lg-12 segmentation tc" ><img src="./images/loading.gif" /></div>');
+               },
                success: function(data){
                   if(data.status==0){
+                  	
                     $("#markcontents").attr('class',"show");
                     if(data.data.title==null)
                       $("input[name=markTitle]").val(data.data.url);
                     else
                       $("input[name=markTitle]").val(data.data.title);
+                    
                     $("input[name=markUrl]").val(data.data.url);
                     $("input[name=markKeyword]").val(data.data.keywords);
-
+					$("#sendBefore").html("");
                   }
                   else{
                     alert(data.msg);
+                    $("#sendBefore").html("");
                   }
-              }
+              },
+			  error: function(x, t, m) {
+			        if(t==="timeout") {
+			        	$("#markcontents").attr('class',"show");
+  			        	$("input[name=markTitle]").val($("#addUrl").val());
+  			            $("input[name=markUrl]").val($("#addUrl").val());
+                    	$("input[name=markKeyword]").val("");
+  						$("#sendBefore").html("");
+//			        	alert("111")
+			        } else {
+			            alert(t);
+			        }
+			  }
              });
       }
 

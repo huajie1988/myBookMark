@@ -387,7 +387,7 @@ function getMarkByDate () {
               $("#marklist").html("");
               html+="<div class='segmentation col-12 col-sm-12 col-lg-12 myBorder'>";
               for (var i = 0; i < data.data.length; i++) {
-                html+="<a href='javascript:void(0);' onclick=searchMark('file','"+data.data[i]['month_short']+"');><div class='col-3 col-sm-3 col-lg-3 listTitle'>"+data.data[i]['month']+"&nbsp;["+data.data[i]['markNum']+"]</a></div>";
+                html+="<a href='javascript:void(0);' onclick=searchMark('file','"+data.data[i]['month_short']+"');><div class='col-3 col-sm-3 col-lg-3 listTitle'>"+data.data[i]['month']+"&nbsp;["+data.data[i]['markNum']+"]</div></a>";
                 if(i%3==0 && i!=0){
                   html+="</div><div class='segmentation col-12 col-sm-12 col-lg-12 myBorder'>";
                 }
@@ -420,6 +420,110 @@ function delMark () {
                          type: "POST",
                          url: "/operate/controller.php",
                          data: dataArgs,
+                         dataType: "json",
+                         success: function(data){
+                            if(data.status==0){
+                              layer.msg(data.msg , 3, 1);
+                              setTimeout("location.href='/ucenter.html';",2000); 
+                            }else{
+                              layer.alert(data.msg,5,!1);
+                            }
+                        }
+                     });
+                },
+        }
+    });
+}
+
+
+
+function createFavoriteChangeList(){
+  var html="";
+  var classes="";
+  var where=1;
+
+          $.ajax({
+                 type: "POST",
+                 url: "/operate/controller.php",
+                 data: {where:where,class:'operate',func:'getFavorite'},
+                 dataType: "json",
+                 success: function(data){
+			            if(data.status==0){
+			              $("#marklist").html("");
+  			              html+="<div class='segmentation col-12 col-sm-12 col-lg-12 myBorder'>";
+  			              var br=1;
+  			              for (var i = 0; i < data.data.length; i++) {
+  			                html+="<div class='col-3 col-sm-3 col-lg-3 listTitle'><a href='javascript:void(0);' onclick=searchMark('favorite',"+data.data[i]['id']+");>"+data.data[i]['name']+"&nbsp;[";
+  			                html+=+data.data[i]['favNum']+"]</a><br><span class='fl'><a href='javascript:void(0);' data-show='1' class='is_show' onclick='changeFavorite("+data.data[i]['id']+",this)'><img class='edit' src='../images/edit.png' /></a><a href='javascript:void(0);' onclick='deleteFavorite("+data.data[i]['id']+",this)'><img class='delete' src='../images/delete.png' /></a></span></div>";
+  			                if(br%4==0){
+  			                  html+="</div><div class='segmentation col-12 col-sm-12 col-lg-12 myBorder'>";
+  			                }
+  			                br++;
+  			              }
+  			              html+="</div>";
+  			              $("#marklist").html(html);
+  			              $("#sidebar").find("a").removeClass("active");
+              			  $("#home").addClass("active");
+			            }else{
+			              layer.alert(data.msg,5,!1);
+			            }
+                }
+             });  
+}
+
+
+function changeFavorite(id,o){
+	var is_show = parseInt($(o).attr("data-show"));
+	if(is_show){
+		$("#favoriteChangeSaveDiv").remove();
+		var favoriteName=$(o).parent().prev().prev().text().split("[");
+		favoriteName=favoriteName[0];
+		var html='<div id="favoriteChangeSaveDiv"><div class="col-lg-12 segmentation" ><input type="text" class="form-control" value=\''+favoriteName+'\'></div>';
+		html+='<div class="col-lg-12 segmentation" ><button class="btn btn-primary btn-lg btn-block" type="button" onclick="favoriteChangeSave('+id+');">保存</button></div></div>';
+		$(o).parent().parent().parent().append(html);
+		$(".is_show").attr("data-show","1");
+		$(o).attr("data-show","0");
+	}else{
+		$("#favoriteChangeSaveDiv").remove();
+		$(".is_show").attr("data-show","1");
+	}
+	
+}
+
+
+
+function favoriteChangeSave(favorite_id){
+		  var favoriteName= $("#favoriteChangeSaveDiv").find("input[type=text]").val();
+          $.ajax({
+                 type: "POST",
+                 url: "/operate/controller.php",
+                 data: {favorite_id:favorite_id,favoriteName:favoriteName,class:'operate',func:'favoriteChangeSave'},
+                 dataType: "json",
+                 success: function(data){
+			            if(data.status==0){
+    	            	  layer.msg(data.msg , 3, 1);
+              			  setTimeout("location.href='/ucenter.html';",2000); 
+			            }else{
+			              layer.alert(data.msg,5,!1);
+			            }
+                }
+             });  
+}
+
+function deleteFavorite(favorite_id,o){
+	  $.layer({
+        shade : [0], //不显示遮罩
+        area : ['auto','auto'],
+        dialog : {
+                msg:'确定要删除该收藏夹吗？删除后不可恢复',
+                btns : 2, 
+                type : 0,
+                btn : ['确定','取消'],
+                yes : function(){
+                      $.ajax({
+                         type: "POST",
+                         url: "/operate/controller.php",
+                         data: {favorite_id:favorite_id,class:'operate',func:'deleteFavorite'},
                          dataType: "json",
                          success: function(data){
                             if(data.status==0){
