@@ -201,13 +201,37 @@ class operate{
 	
 				//开始处理
 	
+				$charset="UTF-8";
+				$charset_tmp="";
+				preg_match('/<meta.+http-equiv="Content-Type"(.*)(charset=[\"|\']?\S*[\"|\']?).+>/i',strtolower($contents),$matches); 
+				if(!empty($matches)){
+					$tmp_attr=explode("=", $matches[count($matches)-1]);
+	  				$tmp_attr=explode("\"", $tmp_attr[1]);
+					$charset_tmp=$tmp_attr[0];
+				}else{
+					preg_match('/<meta.+?charset=[^\w]?([-\w]+)/i',strtolower($contents),$matches);				
+					if(!empty($matches)){			
+					$tmp_attr=explode("=", $matches[count($matches)-1]);
+					if(count($tmp_attr)>1){
+						$tmp_attr=explode("\"", $tmp_attr[1]);
+						$charset_tmp=$tmp_attr[1];	
+						}else{
+							$charset_tmp=$tmp_attr[0];
+						}
+					}
+					
+				}
+				
+  				if(trim($charset_tmp)!="")
+					$charset=$charset_tmp;
+	
 				$title='';
 				preg_match_all("/<title.*>(.*)<\/title>/isU", strtolower($contents), $matches); 
 				$matches=array_filter($matches);
 				
 				if(!empty($matches)){
 					
-					mb_convert_encoding($contents, "UTF-8");
+					mb_convert_encoding($contents, "UTF-8", $charset);
 					$tmp_attr=explode("title", $contents);				
 					$tmp_attr=explode(">", $tmp_attr[1]);
 					$tmp_attr=explode("<", $tmp_attr[1]);				
@@ -222,12 +246,12 @@ class operate{
 				preg_match('/<meta.+name="keywords"(.*)(content=[\"|\']?\S*[\"|\']?).+>/i',strtolower($contents),$matches); 
 				$keywords="";
 				if(!empty($matches)){
-					$tmp_attr=str_replace("'","\"",mb_convert_encoding($matches[count($matches)-1], "UTF-8"));
+					$tmp_attr=str_replace("'","\"",mb_convert_encoding($matches[count($matches)-1], "UTF-8", $charset));
 					$tmp_attr=explode("\"", $tmp_attr);
 					$keywords=$tmp_attr[1];
 	
 				}
-				$data=array('title'=>mb_convert_encoding($title, "UTF-8"),'keywords'=>$keywords,'url'=>$url);
+				$data=array('title'=>mb_convert_encoding($title, "UTF-8", $charset),'keywords'=>$keywords,'url'=>$url);
 				common::success("查找成功",$data);
 			}else{
 				common::error("查找失败");
