@@ -49,7 +49,10 @@ function createMarkList(type,where,limit){
 					        html+='<p class="segmentation"><a class="btn btn-default" href="javascript:void(0)" role="button">查看详情»</a><a href="javascript:void(0);" alt="是否喜欢" onclick="changeLike('+ret[i]['id']+',this);"><span class="'+is_like_class+'">&nbsp;</span></a><a href="javascript:void(0);" alt="是否公共" onclick="changePrivate('+ret[i]['id']+',this);"><span class="'+is_private_class+'">&nbsp;</span></a><span class="fr static"><span onclick="changeTags(this);">'+tags+'</span><input type="text" style="display:none;" class="input_transparent static" value="'+tags+'" onblur="saveTags('+ret[i]['id']+",this"+');"/></span></p></div>';
 					    /*<div class="squaredFour"><input type="checkbox" value="None" id="squaredFour" name="check[]"><label for="squaredFour"></label></div>*/
               };
-              		pagebarhtml+='<div class="fr"><ul class="pagination"><li class="'+(prev_can?"":"disabled")+'"><a href="javascript:void(0);" '+( prev_can ?' onclick="createMarkList(1,'+where+","+((parseInt(Page['pagenow'])-2)*parseInt(Page['pagesize']))+');"':"")+'>&laquo;</a></li>';
+              
+              		
+              	if(ret.length>0){
+              		pagebarhtml+='<div class="fr"><ul class="pagination"><li class="'+(prev_can?"":"disabled")+'"><a href="javascript:void(0);" '+( prev_can ?' onclick="createMarkList(1,'+"'"+Page['where']+"',"+((parseInt(Page['pagenow'])-2)*parseInt(Page['pagesize']))+');"':"")+'>&laquo;</a></li>';
               		var pagehtml="";
               		for (var j = 0; j< Page['page'];j++) {
               			var pageNo=(j+1);
@@ -67,12 +70,13 @@ function createMarkList(type,where,limit){
               			}else{
               				
               			}
-              			pagehtml+='<li class="'+classPageNow+'" '+( now_can ?' onclick="createMarkList(1,'+where+","+((pageNo-1)*parseInt(Page['pagesize']))+');"':"")+'><a href="javascript:void(0);">'+pageNo+'<span class="sr-only">(current)</span></a></li>'
+              			pagehtml+='<li class="'+classPageNow+'" '+( now_can ?' onclick="createMarkList(1,'+"'"+Page['where']+"',"+((pageNo-1)*parseInt(Page['pagesize']))+');"':"")+'><a href="javascript:void(0);">'+pageNo+'<span class="sr-only">(current)</span></a></li>'
               			          			
               		}
               		pagebarhtml+=pagehtml
-              		pagebarhtml+='<li class="'+(next_can?"":"disabled")+'"><a href="javascript:void(0);" '+(next_can ? ' onclick="createMarkList(1,'+where+","+((parseInt(Page['pagenow']))*parseInt(Page['pagesize']))+');"':"")+'>»</a></li></ul></div>';
+              		pagebarhtml+='<li class="'+(next_can?"":"disabled")+'"><a href="javascript:void(0);" '+(next_can ? ' onclick="createMarkList(1,'+"'"+Page['where']+"',"+((parseInt(Page['pagenow']))*parseInt(Page['pagesize']))+');"':"")+'>»</a></li></ul></div>';
 					html+=pagebarhtml;
+					}
 					$("#marklist").append(html);
                     }else{
                       alert(data.msg);

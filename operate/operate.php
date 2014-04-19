@@ -87,6 +87,8 @@ class operate{
 
 		}
 		
+		$pageWhere=$args['where'];
+		
 		if(isset($args['limit']) && trim($args['limit'])!=""){
 			$limit_t=trim($args['limit'],",");
 			if(substr_count($limit_t,",")>=0){
@@ -122,7 +124,11 @@ class operate{
 		
 		$ret=$mark_url_obj->query($args);
 		
-		$SQL="SELECT COUNT(*) as totalCol FROM mark_url WHERE user_id=".$user['id'].$where;
+		$SQL="SELECT COUNT(*) AS totalCol 
+			  FROM ( SELECT a.* FROM mark_url AS a
+			  LEFT JOIN mark_url_tag AS b ON b.url_id=a.id
+			  WHERE user_id=".$user['id'].$where." 
+			  GROUP BY a.id) AS m";
   		$totalCol=$mark_url_obj->querySql($SQL);
 		$totalCol=$totalCol[0]['totalCol'];
 		$page=ceil($totalCol/$pageSize);
@@ -153,6 +159,7 @@ class operate{
 			'page'=>$page,
 			'pagenow'=>$pageNow,
 			'pagesize'=>$pageSize,
+			'where'=>$pageWhere,
 		);
 		$rets['ret']=$ret;
 
