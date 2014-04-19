@@ -95,6 +95,13 @@ class dbBaseCRUD
 	public function querySql($SQL)
 	{
 		$rs=$this->dbh->query($SQL);
+		$error=$this->dbh->errorInfo();
+		$error['errsql']=$SQL;
+		if($this->errorMsg($error,true)){
+			$rs->setFetchMode(PDO::FETCH_ASSOC);
+			$result_arr = $rs->fetchAll();
+			return $result_arr;
+		}
 		$rs->setFetchMode(PDO::FETCH_ASSOC);
 		$result_arr = $rs->fetchAll();
 		return $result_arr;

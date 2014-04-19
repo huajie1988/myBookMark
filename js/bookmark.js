@@ -1,8 +1,14 @@
-function createMarkList(type,where){
+function createMarkList(type,where,limit){
+	$("#marklist").html("");
 	var html="";
 	var classes="";
+	var pagebarhtml="";
 		if(where=="" || where==null){
 			where=1;
+		}
+		
+		if(limit=="" || limit==null){
+			limit=0;
 		}
 
 
@@ -15,16 +21,21 @@ function createMarkList(type,where){
           $.ajax({
                  type: "POST",
                  url: "/operate/controller.php",
-                 data: {where:where,class:'operate',func:'getmark'},
+                 data: {where:where,limit:limit,class:'operate',func:'getmark'},
                  dataType: "json",
                  success: function(data){
                     if(data.status==0){
-                      for (var i = 0; i < data.data.length; i++) {
-                      		var tags=data.data[i]['tags'];
-                          var note=data.data[i]['note'];
-                          var is_like=data.data[i]['is_like'];
+                    	var ret = data.data['ret'];
+                    	var Page = data.data['Page'];
+                    	var prev_can=!(Page['pagenow']==1);
+                    	var next_can=!(Page['pagenow']==Page['page']);
+                    	
+                      for (var i = 0; i < ret.length; i++) {
+                      		var tags=ret[i]['tags'];
+                          var note=ret[i]['note'];
+                          var is_like=ret[i]['is_like'];
                           var is_like_class="star_like";
-                          var is_private=data.data[i]['is_private'];
+                          var is_private=ret[i]['is_private'];
                           var is_private_class="locked";
                       		if(tags=="null" || tags==null || tags=="")
                       			tags="未分类";
@@ -34,10 +45,34 @@ function createMarkList(type,where){
                             is_like_class="star";
                           if(is_private=="null" || is_private==null || is_private=="" || is_private==0)
                             is_private_class="unlock";
-					    	html+='<div class="segmentation '+classes+' myBorder"><h3><div class="squaredFour" onclick="showOperate();"><input type="checkbox" value="'+data.data[i]['id']+'" id="squaredFour'+data.data[i]['id']+'" name="mark_id[]"><label for="squaredFour'+data.data[i]['id']+'"></label></div><a  class="listTitle" href="'+data.data[i]['url']+'"  target="_blank">'+data.data[i]['title']+'</a><span class="fr static">'+getLocalTime(data.data[i]['createtime'])+'</span></h3><p style="margin-top:10px;">'+note+'</p>';
-					        html+='<p class="segmentation"><a class="btn btn-default" href="javascript:void(0)" role="button">查看详情»</a><a href="javascript:void(0);" alt="是否喜欢" onclick="changeLike('+data.data[i]['id']+',this);"><span class="'+is_like_class+'">&nbsp;</span></a><a href="javascript:void(0);" alt="是否公共" onclick="changePrivate('+data.data[i]['id']+',this);"><span class="'+is_private_class+'">&nbsp;</span></a><span class="fr static"><span onclick="changeTags(this);">'+tags+'</span><input type="text" style="display:none;" class="input_transparent static" value="'+tags+'" onblur="saveTags('+data.data[i]['id']+",this"+');"/></span></p></div>';
+					    	html+='<div class="segmentation '+classes+' myBorder"><h3><div class="squaredFour" onclick="showOperate();"><input type="checkbox" value="'+ret[i]['id']+'" id="squaredFour'+ret[i]['id']+'" name="mark_id[]"><label for="squaredFour'+ret[i]['id']+'"></label></div><a  class="listTitle" href="'+ret[i]['url']+'"  target="_blank">'+ret[i]['title']+'</a><span class="fr static">'+getLocalTime(ret[i]['createtime'])+'</span></h3><p style="margin-top:10px;">'+note+'</p>';
+					        html+='<p class="segmentation"><a class="btn btn-default" href="javascript:void(0)" role="button">查看详情»</a><a href="javascript:void(0);" alt="是否喜欢" onclick="changeLike('+ret[i]['id']+',this);"><span class="'+is_like_class+'">&nbsp;</span></a><a href="javascript:void(0);" alt="是否公共" onclick="changePrivate('+ret[i]['id']+',this);"><span class="'+is_private_class+'">&nbsp;</span></a><span class="fr static"><span onclick="changeTags(this);">'+tags+'</span><input type="text" style="display:none;" class="input_transparent static" value="'+tags+'" onblur="saveTags('+ret[i]['id']+",this"+');"/></span></p></div>';
 					    /*<div class="squaredFour"><input type="checkbox" value="None" id="squaredFour" name="check[]"><label for="squaredFour"></label></div>*/
               };
+              		pagebarhtml+='<div class="fr"><ul class="pagination"><li class="'+(prev_can?"":"disabled")+'"><a href="javascript:void(0);" '+( prev_can ?' onclick="createMarkList(1,'+where+","+((parseInt(Page['pagenow'])-2)*parseInt(Page['pagesize']))+');"':"")+'>&laquo;</a></li>';
+              		var pagehtml="";
+              		for (var j = 0; j< Page['page'];j++) {
+              			var pageNo=(j+1);
+              			var now_can=true;
+              			if(pageNo>10 && parseInt(Page['pagenow'])<10)
+              				break;
+              			var classPageNow="";
+              			if(pageNo==parseInt(Page['pagenow'])){
+              				classPageNow="active";
+              				now_can=false;
+              			}
+              			
+              			if(pageNo%10==0 && parseInt(Page['pagenow'])>=10){
+              				pagehtml="";              				
+              			}else{
+              				
+              			}
+              			pagehtml+='<li class="'+classPageNow+'" '+( now_can ?' onclick="createMarkList(1,'+where+","+((pageNo-1)*parseInt(Page['pagesize']))+');"':"")+'><a href="javascript:void(0);">'+pageNo+'<span class="sr-only">(current)</span></a></li>'
+              			          			
+              		}
+              		pagebarhtml+=pagehtml
+              		pagebarhtml+='<li class="'+(next_can?"":"disabled")+'"><a href="javascript:void(0);" '+(next_can ? ' onclick="createMarkList(1,'+where+","+((parseInt(Page['pagenow']))*parseInt(Page['pagesize']))+');"':"")+'>»</a></li></ul></div>';
+					html+=pagebarhtml;
 					$("#marklist").append(html);
                     }else{
                       alert(data.msg);
@@ -151,7 +186,7 @@ function getLocalTime(nS) {
         }
 
         $(id).addClass("active");
-        createMarkList(1,where);
+        createMarkList(1,where,0);
      }
 
 

@@ -78,10 +78,23 @@ class operate{
 	public function getmark($args=array())
 	{
 		$where="";
-
+		$limit="all";
+		$pageSize=20;
+		$page=1;
+		$pageNow=1;
 		if(isset($args['where']) && trim($args['where'])!=""){
 			$where=str_replace(" or ", " AND ", " AND ".strtolower($args['where']));
 
+		}
+		
+		if(isset($args['limit']) && trim($args['limit'])!=""){
+			$limit_t=trim($args['limit'],",");
+			if(substr_count($limit_t,",")>=0){
+				$limit_t=explode(",", $limit_t);
+				$limitStart=abs(intval($limit_t[0]));
+				$limit=$limitStart.",".$pageSize;
+				$pageNow=ceil($limitStart/$pageSize)+1;
+			}
 		}
 		
 		$userName=$_COOKIE['username'];
@@ -91,9 +104,9 @@ class operate{
 		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
-		$ret=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."')");
+		$user=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."')");
 
-		if(empty($ret))
+		if(empty($user))
 		{
 			common::error("用户不存在") ;
 		}
@@ -101,14 +114,20 @@ class operate{
 		$mark_url_obj=new dbBaseCRUD("mark_url AS a");
 		$args=array(
 			'join'=>"LEFT JOIN mark_url_tag AS b ON b.url_id=a.id",
-			'where'=>"user_id=".$ret['id']." AND status=1 ".$where,
+			'where'=>"user_id=".$user['id']." AND status=1 ".$where,
 			'col'=>" a.*",
-			'limit'=>"all",
+			'limit'=>$limit,
 			'group'=>"a.id"
 			);
 		
 		$ret=$mark_url_obj->query($args);
-
+		
+		$SQL="SELECT COUNT(*) as totalCol FROM mark_url WHERE user_id=".$user['id'].$where;
+  		$totalCol=$mark_url_obj->querySql($SQL);
+		$totalCol=$totalCol[0]['totalCol'];
+		$page=ceil($totalCol/$pageSize);
+		
+		
 		$mark_tag_obj=new dbBaseCRUD("mark_url_tag AS a");
 		foreach ($ret as $key => $val) {
 			$name="";
@@ -128,8 +147,16 @@ class operate{
 			if(strlen($val['note'])>100)
 			$ret[$key]['note']=mb_strcut($val['note'],0,50,"utf-8")."...";
 		}
+		
+		$rets['Page']=array(
+			'pagetotal'=>$totalCol,
+			'page'=>$page,
+			'pagenow'=>$pageNow,
+			'pagesize'=>$pageSize,
+		);
+		$rets['ret']=$ret;
 
-		common::success("查询成功",$ret);
+		common::success("查询成功",$rets);
 	}
 
 	public function reg($args=array())
@@ -197,8 +224,13 @@ class operate{
 //		下面的try catch暂时无用
 	try {
 			if($contents){
-	
-	
+/*	
+ *				2014-04-18 23:03 Huajie
+ *				获取charset代码在第四版中去除，第五版中恢复
+ *				原因：如果为设置charset则在转码时如果采集网页为非UTF-8时可能导致最终转换为乱码，
+ *				故需要手动指定源编码
+ * 
+ */	
 				//开始处理
 	
 				$charset="UTF-8";
@@ -296,6 +328,8 @@ class operate{
 		$mark_url_tag_obj=new dbBaseCRUD("mark_url_tag");
 		$tag_id=0;
 		foreach ($keywords as $key => $val) {
+			if($key > 9)
+				break;
 			$ret=$mark_tag_obj->search("name='$val'");
 			if(!$ret){
 				$data_tag=array("name"=>$val);
