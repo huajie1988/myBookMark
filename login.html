@@ -17,13 +17,23 @@
 
   <body>
 
-    <div class="container">
+    <div class=" col-lg-12 container">
 
       <form class="form-signin" role="form" id="loginForm" method="post" action="">
+        <div class="segmentation col-lg-12">
         <h2 class="form-signin-heading">请输入登录信息</h2>
         <input type="text" class="form-control" placeholder="用户名/邮箱" name="userName" required="" autofocus="">
-        <div class="segmentation"></div>
+        </div>
+        <div class="segmentation col-lg-12">
         <input type="password" name="password" class="form-control" placeholder="密码" required="">
+        </div>
+        <div class="segmentation col-lg-6">
+        	<input type="text" name="captcha" class="form-control" placeholder="验证码" required="">        	
+        </div>
+        <div class="segmentation col-lg-6">
+        	<img id="captcha_img" src="/operate/controller.php?class=docaptcha&func=run">
+        </div>
+        <div class="segmentation col-lg-12">
         <label class="checkbox">
           <input type="checkbox" name="rememberMe" value="1">记住我
           <span id="regDiv">
@@ -33,10 +43,12 @@
             <a href="forgetpassword.html" style="float:right">忘记密码</a>
           </span>
         </label>
-        <div class="segmentation"></div>
+        </div>
+        <div class="segmentation col-lg-12">
         <input type="hidden" name="class" value="operate">
         <input type="hidden" name="func" value="login">        
         <button class="btn btn-lg btn-primary btn-block" id="sumbit" type="button">登录</button>
+      	</div>      	
       </form>
 
     </div> <!-- /container -->
@@ -65,6 +77,11 @@
                 // layer.alert('信息框演示二',5,!1);
             });
         });
+        $(document).ready(function(){
+        	$("#captcha_img").click(function(){
+        		$("#captcha_img").attr("src","/operate/controller.php?class=docaptcha&func=run&"+Math.random()*10000);
+        	});
+        })
     </script>
     
 

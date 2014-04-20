@@ -8,6 +8,7 @@ class operate{
 	{
 		$userName="";
 		$password="";
+		$CAPTCHA="";
 		$nologin_id=$this->createNologinId();		
 
 		if(isset($args['userName'])){
@@ -16,6 +17,10 @@ class operate{
 
 		if(isset($args['password'])){
 			$password=md5($args['password']);
+		}
+		
+		if(isset($args['captcha'])){
+			$CAPTCHA=$args['captcha'];
 		}
 		
 		if(isset($args['rememberMe'])){
@@ -32,6 +37,14 @@ class operate{
 		if(trim($password)==""){
 			common::error("请填写密码");
 		}
+
+		if(trim($CAPTCHA)==""){
+			common::error("请填写验证码");
+		}
+		
+  		if(!$this->checkCAPTCHA($CAPTCHA)){
+  			common::error("验证码输入错误");
+  		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
 		$ret=$mark_user_obj->search("(email='".$userName."' OR username='".$userName."') AND password='".$password."'");
@@ -77,6 +90,7 @@ class operate{
 
 	public function getmark($args=array())
 	{
+
 		$where="";
 		$limit="all";
 		$pageSize=20;
@@ -168,10 +182,27 @@ class operate{
 
 	public function reg($args=array())
 	{
-		$email=$args['email'];
-		$password=$args['password'];
-		$repassword=$args['repassword'];
+		$email="";
+		$password="";
+		$repassword="";
+		$CAPTCHA="";
 		$nologin_id=$this->createNologinId();
+		
+		if(isset($args['email'])){
+			$email=$args['email'];
+		}
+		
+		if(isset($args['password'])){
+			$password=$args['password'];
+		}
+				
+		if(isset($args['repassword'])){
+			$repassword=$args['repassword'];
+		}
+				
+		if(isset($args['captcha'])){
+			$CAPTCHA=$args['captcha'];
+		}
 
 		if(!$email){
 			common::error("请填写邮箱");
@@ -188,13 +219,23 @@ class operate{
 		if($password!=$repassword || trim($repassword)==""){
 			common::error("密码不一致");
 		}
+		
+		if(trim($CAPTCHA)==""){
+			common::error("请填写验证码");
+		}
+		
+  		if(!$this->checkCAPTCHA($CAPTCHA)){
+  			common::error("验证码输入错误");
+  		}
 
+		
+		
 		$mark_user_obj=new dbBaseCRUD("mark_user");
 		$ret=$mark_user_obj->search("email='".$email."'");
 		if(!empty($ret)){
 			common::error("此邮箱已注册，请更换邮箱");
 		}
-
+		
 		$data_user=array(
 			"username"=>$email,
 			"email"=>$email,
@@ -207,7 +248,7 @@ class operate{
 			
 		//写入cookie 必须加作用域"/" 2014/02/04 WHJ
 		setcookie("username", $email, time()+3600,"/");
-		setcookie("user_id", $user_id, $time,"/");
+		setcookie("user_id", $user_id, time()+3600,"/");
 		setcookie("nologin_id", $nologin_id, time()+3600,"/");
 		setcookie("status", 1, time()+3600,"/");
 
@@ -827,6 +868,16 @@ class operate{
 		$mark_url_obj->update($data,"favorites_id = $favorite_id");
 		
 		common::success("删除成功");
+	}
+	
+	private function checkCAPTCHA($CAPTCHA){
+		if(!isset($_SESSION['code'])){
+			common::error("验证码生成失败") ;
+		}
+		
+		return trim($_SESSION['code'])==trim($CAPTCHA);
+
+		
 	}
 
 }

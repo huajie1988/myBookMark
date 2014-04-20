@@ -128,7 +128,7 @@ function getLocalTime(nS) {
             type : 2,
             title : '登录',
             iframe : {src : './login.html'},
-            area : ['550px' , '330px'],
+            area : ['550px' , '440px'],
             offset : ['100px','']
             });
       }

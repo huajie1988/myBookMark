@@ -19,21 +19,35 @@
 
   <body>
 
-    <div class="container">
+    <div class=" col-lg-12 container">
 
       <form class="form-signin" id="regForm" role="form" method="post" action="">
+        <div class="segmentation col-lg-12">
         <h2 class="form-signin-heading">请输入注册信息</h2>
         <input type="text" class="form-control" placeholder="注册邮箱" required="" pattern="^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$" name="email" autofocus=""><!--验证邮箱-->
-        <div class="segmentation"></div>
+        </div>
+        <div class="segmentation col-lg-12">
         <input type="password" class="form-control" placeholder="密码" pattern="\w{6,12}" name="password" required="">
-        <div class="segmentation"></div>
+        </div>
+        <div class="segmentation col-lg-12">
         <input type="password" class="form-control" placeholder="确认密码" pattern="\w{6,12}" name="repassword" required="">
+        </div>
+        <div class="segmentation col-lg-6">
+        	<input type="text" name="captcha" class="form-control" placeholder="验证码" required="">        	
+        </div>
+        <div class="segmentation col-lg-6">
+        	<img id="captcha_img" src="/operate/controller.php?class=docaptcha&func=run">
+        </div>
+        <div class="segmentation col-lg-12">
         <label class="checkbox">
            <a href="login.html" style="float:right">已有账户，点击登录</a>
         </label>
+        </div>
+        <div class="segmentation col-lg-12">
         <input type="hidden" name="class" value="operate">
         <input type="hidden" name="func" value="reg">    
         <button class="btn btn-lg btn-primary btn-block" id="sumbit" type="button">注册</button>
+      	</div>
       </form>
 
     </div> <!-- /container -->
@@ -49,9 +63,8 @@
                     if(data.status==1){
                         layer.alert(data.msg,5,!1);
                     }else if(data.status==0){
-                        var index = parent.layer.getFrameIndex(window.name);
                         parent.layer.msg(data.msg , 3, 1);
-                        setTimeout('parent.location.reload();',2000); 
+                        setTimeout("parent.location.href='/ucenter.html';",2000);
                         
                     }else{
                         layer.alert("系统错误",5,!1);
@@ -61,6 +74,11 @@
                 // layer.alert('信息框演示二',5,!1);
             });
         });
+        $(document).ready(function(){
+        	$("#captcha_img").click(function(){
+        		$("#captcha_img").attr("src","/operate/controller.php?class=docaptcha&func=run&"+Math.random()*10000);
+        	});
+        })
     </script>
 </body>
 </html>

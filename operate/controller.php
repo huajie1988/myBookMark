@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 $find = array("<script","</script");
 $replace = array("");
 
