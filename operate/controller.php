@@ -17,7 +17,7 @@ function classAutoLoad(){
 					if(!is_array($val2)){
 						$filename=$root.$val."/$val2";
 						if (file_exists($filename) && $val2!=$filenamenow) {
-						    require("$filename");
+						    require_once("$filename");
 						}
 					}else{
 						//暂时不准备将操作类里面添加其他辅助类，可以将需要的类放在classes里面

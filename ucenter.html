@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="./css/bootstrap.css">
+    <link rel="stylesheet" href="./css/bootstrap-datetimepicker.min.css">
   </head>
   <body>
 <nav class="navbar navbar-default" role="navigation">
@@ -21,6 +22,24 @@
 
   <!-- Collect the nav links, forms, and other content for toggling -->
   <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  	<ul class="nav navbar-nav ">
+      <li><a href="javascript:void(0);" id="city">城市</a></li>
+      <li><a href="javascript:void(0);" id="nowTemp">实时温度</a></li>
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">今日天气<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="javascript:void(0);" id="date">日期</a></li>
+          <li><a href="javascript:void(0);" id="weather">天气</a></li>
+          <li class="divider"></li>
+          <li><a href="javascript:void(0);" id="maxTemp">最高温度</a></li>         
+          <li><a href="javascript:void(0);" id="minTemp">最低温度</a></li>
+          <li><a href="javascript:void(0);" id="humidity">湿度</a></li>
+          <li class="divider"></li>
+          <li><a href="javascript:void(0);" id="windPow">风力</a></li>
+          <li><a href="javascript:void(0);" id="windDir">风向</a></li>
+        </ul>
+      </li>
+    </ul>
     <form class="navbar-form navbar-right" role="search">
       <div class="form-group">
         <input type="text" class="form-control" placeholder="Search">
@@ -32,8 +51,8 @@
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">我的帐户 <b class="caret"></b></a>
           <ul class="dropdown-menu">
-            <li><a href="#">导出书签</a></li>
-            <li><a href="#">个人设置</a></li>
+            <li><a href="javascript:void(0);" onclick="exportBookMarkAll();">导出全部书签</a></li>
+            <li><a href="javascript:void(0);" onclick="showUserInfo();">个人设置</a></li>
             <li class="divider"></li>
             <li><a href="javascript:void(0)" onclick="logout();">退出</a></li>
           </ul>
@@ -128,8 +147,8 @@
                   </div>
                 </div>
             </div>
-            <div class="col-lg-3 segmentation tc" >
-              打标签
+            <div class="col-lg-3 segmentation tc"  onclick="exportBookMark();">
+            	导出所选书签
             </div>
             <div class="col-lg-3 segmentation tc" >
               <span onclick="delMark();">删除归档</span>
@@ -154,6 +173,8 @@
     <script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="./js/layer/layer.js"></script>
     <script type="text/javascript" src="./js/bookmark.js"></script>
+    <script type="text/javascript" src="./js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript" src="./js/bootstrap-datetimepicker.zh-CN.js"></script>
     <script type="text/javascript">
 
       $(document).ready(function(){
@@ -183,6 +204,7 @@
           createMarkList(1);
           createFavoriteList();
           createMyTagsCloud();
+          createWeather();
       });
 
       function addMark(){

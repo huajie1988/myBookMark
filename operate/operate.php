@@ -57,7 +57,7 @@ class operate{
 			setcookie("user_id", $ret[0]['id'], $time,"/");
 			setcookie("nologin_id", $nologin_id, $time,"/");
 			setcookie("status", $ret[0]['status'], $time,"/");
-			common::success("登录成功","/");
+			common::success("登录成功");
 		}
 	}
 
@@ -83,7 +83,7 @@ class operate{
 		if(!$ret){
 			common::error("用户不存在");
 		}else{
-			common::success("登录成功","/");
+			common::success("登录成功");
 		}
 	}
 
@@ -96,6 +96,8 @@ class operate{
 		$pageSize=20;
 		$page=1;
 		$pageNow=1;
+		$user_id=0;
+		
 		if(isset($args['where']) && trim($args['where'])!=""){
 			$where=str_replace(" or ", " AND ", " AND ".strtolower($args['where']));
 
@@ -113,14 +115,16 @@ class operate{
 			}
 		}
 		
-		$userName=$_COOKIE['username'];
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
 
-		if(!$userName || trim($userName)==""){
+		if($user_id==0){
 			common::error("请先登录") ;
 		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
-		$user=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."')");
+		$user=$mark_user_obj->searchone("id=$user_id");
 
 		if(empty($user))
 		{
@@ -344,24 +348,49 @@ class operate{
 	public function save($args=array())
 	{
 
-		$url=$args['url'];
-		$title=$args['title'];
-		$keywords=$args['keywords'];
-		$note=$args['note'];
+		$url="";
+		$title="";
+		$keywords="";
+		$note="";
+		$user_id=0;
+		
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+		
+		if(isset($args['url'])){
+			$url=$args['url'];
+		}
+		
+		if(isset($args['title'])){
+			$title=$args['title'];
+		}
+		
+		if(isset($args['keywords'])){
+			$keywords=$args['keywords'];
+		}
+
+		if(isset($args['note'])){
+			$note=$args['note'];
+		}				
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
-		$ret=$mark_user_obj->search("username='".$_COOKIE['username']."'");
+		$ret=$mark_user_obj->searchone("id=$user_id");
 		
 		//保存url
 		if(empty($ret)){
-			common::error("请先登录！");
+			common::error("未找到该用户");
 			exit();
 		}
 		$data_mark=array(
 			"url"=>$url,
 			"title"=>$title,
 			"status"=>1,
-			"user_id"=>$ret[0]['id'],
+			"user_id"=>$user_id,
 			"createtime"=>time(),
 			"note"=>$note,
 			);
@@ -401,19 +430,22 @@ class operate{
 	public function getFavorite($args=array())
 	{
 		$where="";
+		$user_id=0;
 
 		if(isset($args['where']) && trim($args['where'])!=""){
 			$where=" AND ".$args['where'];
 		}
 
-		$userName=$_COOKIE['username'];
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
 
-		if(!$userName || trim($userName)==""){
+		if($user_id==0 || trim($user_id)==""){
 			common::error("请先登录") ;
 		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
-		$ret=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."')");
+		$ret=$mark_user_obj->searchone("id=$user_id");
 
 		if(empty($ret))
 		{
@@ -423,7 +455,7 @@ class operate{
 
 		$mark_url_obj=new dbBaseCRUD("mark_favorites as a");
 		$queryArr= array(
-			'where' =>'a.user_id = '.$ret['id'] , 
+			'where' =>'a.user_id = '.$user_id , 
 			'col'	=>'a.name,a.id,COUNT(favorites_id) as favNum',
 			'join'	=>'LEFT JOIN (select * from  mark_url where status=1) AS b ON a.id = b.favorites_id',
 			'limit'=>'10',
@@ -534,7 +566,7 @@ class operate{
 
 	public function createMyTagsCloud($args=array())
 	{
-		$userName="";
+//		$userName="";
 		$nologin_id=$this->createNologinId();	
 		$user_id="";
 
@@ -546,20 +578,13 @@ class operate{
 			common::error("请先登录") ;
 		}	
 
-		if(isset($_COOKIE['username'])){
-			$userName=$_COOKIE['username'];
-		}
-
 		if(isset($_COOKIE['nologin_id'])){
 			$nologin_id=$_COOKIE['nologin_id'];
 		}
 
-		if(trim($userName)==""){
-			common::error("请填写用户名");
-		}
 
 		$mark_user_obj=new dbBaseCRUD("mark_user");
-		$ret=$mark_user_obj->searchone("(email='".$userName."' OR username='".$userName."') AND nologin_id='".$nologin_id."'");
+		$ret=$mark_user_obj->searchone("id=$user_id AND nologin_id='".$nologin_id."'");
 
 		if(empty($ret)){
 			common::error("用户不存在");
@@ -567,10 +592,12 @@ class operate{
 
 		$mark_tag_obj=new dbBaseCRUD("mark_tag as a");
 		$queryArr= array(
-			'where' =>'c.user_id = '.$ret['id'] , 
+			'where' =>'c.user_id = '.$user_id , 
 			'col'	=>'a.id,a.name,count(c.id) AS weights',
 			'join'	=>'LEFT JOIN mark_url_tag as b ON a.id=b.tag_id LEFT JOIN (select * from  mark_url where status=1) as c ON c.id=b.url_id',
 			'group'	=>'a.name',
+			'order' =>'count(c.id) DESC',
+			'limit' =>'20',
 			);
 		$ret=$mark_tag_obj->query($queryArr);
 		
@@ -760,7 +787,7 @@ class operate{
 
 	public function delMark($args=array())
 	{
-		$mark_id="";	
+		$mark_id=array();	
 
 		if(isset($_COOKIE['user_id'])){
 			$user_id=intval($_COOKIE['user_id']);
@@ -772,7 +799,13 @@ class operate{
 
 		if(isset($args['mark_id'])){
 			$mark_id=$args['mark_id'];
-		}
+		}		
+		
+  		if(empty($mark_id)){
+  			common::error("请选择要删除的书签");
+  		}
+		
+		
 		$mark_ids=implode(",", $mark_id);
 		$mark_url_obj=new dbBaseCRUD("mark_url");
 		$ret=$mark_url_obj->search("id IN ($mark_ids) AND user_id=$user_id");
@@ -878,6 +911,291 @@ class operate{
 		return trim($_SESSION['code'])==trim($CAPTCHA);
 
 		
+	}
+			
+	public function exportBookMark($args=array()){
+		$mark_id=array();	
+		$all=0;
+		$where="";
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['mark_id'])){
+			$mark_id=$args['mark_id'];
+		}
+		
+		if(isset($args['all'])){
+			$all=intval($args['all']);
+		}
+
+  		if(empty($mark_id)){
+  			common::error("请选择要删除的书签");
+  		}
+
+		$mark_ids=implode(",", $mark_id);
+		
+		if($all==0){
+			$where="a.id IN ($mark_ids) AND a.user_id=$user_id";
+		}else{
+			$where="a.user_id=$user_id";
+		}
+		
+		$mark_url_obj=new dbBaseCRUD("mark_url as a");
+		$data_where=array(
+			"col"=>"a.*,b.name",
+			"join"=>"LEFT JOIN mark_favorites AS b ON a.favorites_id=b.id",
+			"where"=>$where,
+			"limit"=>"all",
+			);
+		$ret=$mark_url_obj->query($data_where);
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		$ret_new=array();
+		
+		foreach($ret as $key => $val){
+			
+			if(trim($val['name'])==""){
+				$val['name']="未分类";
+			}
+			
+			if(!isset($ret_new[$val['name']])){
+				$ret_new[$val['name']]=array();		
+			}
+			
+			$ret_new[$val['name']][]=$val;
+			
+		}
+
+		$this->exportProcess($ret_new,$user_id);
+		
+	}
+	
+	private function exportProcess($data,$user_id){
+		$html='<!DOCTYPE NETSCAPE-Bookmark-file-1>
+				<!-- This is an automatically generated file.
+				     It will be read and overwritten.
+				     DO NOT EDIT! -->
+				<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+				<TITLE>Bookmarks</TITLE>
+				<H1>Bookmarks</H1>';
+		$dom="";		
+		foreach($data as $key1 => $val1){
+			$dom.="\n".'<DL><p>
+    				<DT><H3 ADD_DATE="'.time().'" LAST_MODIFIED="'.time().'" >'.$key1.'</H3>'."\n".'<DL><p>'."\n";
+			foreach($val1 as $key2=>$val2){
+				$dom.='<DT><A HREF="'.$val2['url'].'" ADD_DATE="'.time().'" LAST_MODIFIED="'.time().'">'.$val2['title'].'</A>'."\n";
+			}
+			$dom.="</DL><P>\n";
+		}
+		$html.=$dom."</DL><P>\n";
+		$filePath="";
+		$dirPath=$_SERVER['DOCUMENT_ROOT']."/temp";
+		
+		$ret=common::createDir($dirPath);
+		if($ret!==true){
+			
+			$error_user['content']=$ret;
+			log::createLog($error_user);
+			
+			common::error("创建文件失败") ;
+		}
+		
+		$filePath.=$dirPath."/myBookMark_".$user_id."_".date("Y-m-d").".html";
+		
+		file_put_contents($filePath,$html,LOCK_EX);
+  		
+		common::download($filePath,"myBookMark.html");
+	}
+	
+
+	public function showAllnote($args=array()){
+		$url_id="";	
+
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['url_id'])){
+			$url_id=intval($args['url_id']);
+		}
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->searchone("id=$url_id AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+
+		common::success("查找成功",$ret);
+	}
+
+
+	public function changeNoteSave($args=array()){
+		$url_id="";	
+		$note="";
+		
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+
+		if(isset($args['url_id'])){
+			$url_id=intval($args['url_id']);
+		}
+		
+		if(isset($args['note'])){
+			$note=$args['note'];
+		}else{
+			common::error("保存内容参数错误") ;
+		}
+
+		$mark_url_obj=new dbBaseCRUD("mark_url");
+		$ret=$mark_url_obj->searchone("id=$url_id AND user_id=$user_id");
+
+		if(empty($ret)){
+			common::error("未找到该书签") ;
+		}
+		
+		$data_url['note']=$note;
+		$mark_url_obj->update($data_url,"id=$url_id AND user_id=$user_id");
+		
+		common::success("保存成功",$ret);
+	}
+
+
+	public function getUserInfo($args=array()){
+		
+		$user_id=0;
+		
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+		
+		$mark_user_obj=new dbBaseCRUD("mark_user as a");
+		$data_where=array(
+			"col"=>"a.id,a.username,a.email,b.bind_email,b.birthday,b.sex,b.find_pwd_q,b.find_pwd_a",
+			"join"=>"LEFT JOIN mark_user_info as b ON a.id=b.user_id",
+			"where"=>"a.id=$user_id",
+			"limit"=>"all",
+			);
+		$ret=$mark_user_obj->query($data_where);
+		if(empty($ret) || empty($ret[0])){
+			common::error("未找到记录") ;
+		}
+		
+		common::success("查询成功",$ret[0]);
+	}
+
+	public function saveUserInfo($args=array()){
+		$user_id=0;
+		$nologin_id=$this->createNologinId();
+		$user_name="";
+		$birthday=strtotime("1990-06-30");
+		$sex=1;
+		$bind_email="";
+		$password_prev="";
+		$password_new="";
+		$password_check="";
+		$find_password_q="";
+		$find_password_a="";
+
+			
+		if(isset($_COOKIE['user_id'])){
+			$user_id=intval($_COOKIE['user_id']);
+		}
+
+		if($user_id==0 || trim($user_id)==""){
+			common::error("请先登录") ;
+		}
+		
+		if(isset($_COOKIE['nologin_id'])){
+			$nologin_id=$_COOKIE['nologin_id'];
+		}
+		
+		$mark_user_obj=new dbBaseCRUD("mark_user");
+		$ret=$mark_user_obj->searchone("id=$user_id AND nologin_id='".$nologin_id."'");
+
+		if(empty($ret)){
+			common::error("用户不存在");
+		}
+		
+		foreach($args as $key => $val){
+			if(isset($$key))
+				$$key=$val;
+		}
+		
+		
+		if(trim($user_name)==""){
+			common::error("用户名必须存在");
+		}
+
+		$ret=$mark_user_obj->searchone("username='$user_name' AND id <>$user_id");
+
+		if(!empty($ret)){
+			common::error("此用户名已存在");
+		}
+
+		if(trim($bind_email)){
+			if(!preg_match('/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/', $bind_email)){
+				common::error("邮箱格式不正确");
+			}			
+		}
+
+		$data_user['username']=$user_name;
+		
+		if(trim($password_new)!=""){
+			if($password_new!=$password_check)
+				common::error("两次输入的密码不一致");
+			
+			$ret=$mark_user_obj->searchone("id='$user_id' AND password='".md5($password_prev)."'");
+		
+			if(empty($ret))
+				common::error("原始密码不正确");
+			
+			$data_user['password']=md5($password_new);
+			
+		}
+		
+		$data_user_info=array(
+			'bind_email'=>$bind_email,
+			'birthday'=>$birthday,
+			'sex'=>$sex,
+			'find_pwd_q'=>$find_password_q,
+			'find_pwd_a'=>$find_password_a,
+		);
+
+		$mark_user_obj->update($data_user, "id=$user_id");
+		
+		$mark_user_info_obj=new dbBaseCRUD("mark_user_info");
+		$ret=$mark_user_info_obj->searchone("user_id=$user_id");
+		if(empty($ret)){
+			$data_user_info['user_id']=$user_id;
+			$mark_user_info_obj->add($data_user_info);			
+		}
+		else
+			$mark_user_info_obj->update($data_user_info, "user_id=$user_id");
+
+		common::success("修改成功");
 	}
 
 }

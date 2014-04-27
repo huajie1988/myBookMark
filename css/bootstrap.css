@@ -7143,6 +7143,9 @@ td.visible-print {
   font-size: 10px;
 }
 
+.fontlarge{
+  font-size: 25px;
+}
 
 /* SQUARED FOUR */
  .squaredFour {
@@ -7341,4 +7344,26 @@ span.unlock:hover{
 #sendBefore img{
 	width: 60px;
   	height:60px; 
+}
+
+.static_b{
+  color: #ccc;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.b{
+	font-weight: bold;
+}
+
+.font_gray{
+	color: #ccc;
+}
+
+.chmarkNote{
+	margin-bottom: 15px;
+}
+
+.segmentation_r{
+	margin-right: 50px;
 }

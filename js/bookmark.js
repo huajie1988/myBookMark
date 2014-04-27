@@ -45,8 +45,8 @@ function createMarkList(type,where,limit){
                             is_like_class="star";
                           if(is_private=="null" || is_private==null || is_private=="" || is_private==0)
                             is_private_class="unlock";
-					    	html+='<div class="segmentation '+classes+' myBorder"><h3><div class="squaredFour" onclick="showOperate();"><input type="checkbox" value="'+ret[i]['id']+'" id="squaredFour'+ret[i]['id']+'" name="mark_id[]"><label for="squaredFour'+ret[i]['id']+'"></label></div><a  class="listTitle" href="'+ret[i]['url']+'"  target="_blank">'+ret[i]['title']+'</a><span class="fr static">'+getLocalTime(ret[i]['createtime'])+'</span></h3><p style="margin-top:10px;">'+note+'</p>';
-					        html+='<p class="segmentation"><a class="btn btn-default" href="javascript:void(0)" role="button">查看详情»</a><a href="javascript:void(0);" alt="是否喜欢" onclick="changeLike('+ret[i]['id']+',this);"><span class="'+is_like_class+'">&nbsp;</span></a><a href="javascript:void(0);" alt="是否公共" onclick="changePrivate('+ret[i]['id']+',this);"><span class="'+is_private_class+'">&nbsp;</span></a><span class="fr static"><span onclick="changeTags(this);">'+tags+'</span><input type="text" style="display:none;" class="input_transparent static" value="'+tags+'" onblur="saveTags('+ret[i]['id']+",this"+');"/></span></p></div>';
+					    	html+='<div class="segmentation '+classes+' myBorder"><h3><div class="squaredFour" onclick="showOperate();"><input type="checkbox" value="'+ret[i]['id']+'" id="squaredFour'+ret[i]['id']+'" name="mark_id[]"><label for="squaredFour'+ret[i]['id']+'"></label></div><a  class="listTitle" href="'+ret[i]['url']+'"  target="_blank">'+ret[i]['title']+'</a><span class="fr static">'+getLocalTime(ret[i]['createtime'])+'</span></h3><p style="margin-top:10px;" id="note_'+ret[i]['id']+'">'+note+'</p>';
+					        html+='<p class="segmentation"><a class="btn btn-default static_b" href="javascript:void(0)" data-show="false" data-shortnote="" onclick="showAllnote('+ret[i]['id']+',this);" role="button">(っ﹏-) .｡o</a><a href="javascript:void(0);" alt="是否喜欢" onclick="changeLike('+ret[i]['id']+',this);"><span class="'+is_like_class+'">&nbsp;</span></a><a href="javascript:void(0);" alt="是否公共" onclick="changePrivate('+ret[i]['id']+',this);"><span class="'+is_private_class+'">&nbsp;</span></a><span class="fr static"><span onclick="changeTags(this);">'+tags+'</span><input type="text" style="display:none;" class="input_transparent static" value="'+tags+'" onblur="saveTags('+ret[i]['id']+",this"+');"/></span></p></div>';
 					    /*<div class="squaredFour"><input type="checkbox" value="None" id="squaredFour" name="check[]"><label for="squaredFour"></label></div>*/
               };
               
@@ -137,6 +137,7 @@ function getLocalTime(nS) {
           delCookie("username");
           delCookie("nologin_id");
           delCookie("status");
+          delCookie("user_id");
           // location.reload();
           window.location.href='/index.html';
       }
@@ -334,10 +335,11 @@ function createMyTagsCloud () {
               for (var i = 0; i < data.data.length; i++){
                 var myDate = new Date();
                 var timeStr = myDate.getFullYear()+myDate.getMonth()+myDate.getDate().toString(16);
-                var color="#"+timeStr.substring(timeStr.length-2,timeStr.length)+(parseInt(data.data[i]['id'])+15).toString(16).substr(0, 2)+Math.round(16+Math.random()*255).toString(16).substr(0, 2);
+//              var color="#"+timeStr.substring(timeStr.length-2,timeStr.length)+(parseInt(data.data[i]['id'])+15).toString(16).substr(0, 2)+Math.round(16+Math.random()*255).toString(16).substr(0, 2);
+                var color="#"+(Math.floor(Math.random()*255).toString(16))+(Math.floor(Math.random()*255).toString(16))+(Math.floor(Math.random()*255).toString(16));
                 var fontSize=data.data[i]['weights'];
                 fontSize=Math.round(100+fontSize*10)+"";
-                fontSize=parseInt(fontSize.substr(0, 2))/10+0.8;
+                fontSize=parseInt(fontSize.substr(0, 2))/12+0.8;
                 // if(parseInt(fontSize)<50)
                 //     fontSize=parseInt(fontSize)+20;
                 html+='<a href=javascript:void(0); onclick="searchMark(\'tags\','+data.data[i]['id']+');" ><span style="color:'+color+';font-weight:bold;margin-left:10px;font-size:'+fontSize+'em;">'+data.data[i]['name']+'</span></a>';
@@ -576,4 +578,208 @@ function deleteFavorite(favorite_id,o){
                 },
         }
     });
+}
+
+
+function createWeather(){
+	$.ajax({
+		 type: "POST",
+		 url: "/operate/controller.php",
+		 data: {class:'weather',func:'run'},
+		 dataType: "json",
+		 success: function(data){
+		    if(data.status==0){
+		    	var myDate = new Date();
+		    	var ret=data.data;
+		    	 for(var key in ret){
+		    	 	if(key=="city" || key=="nowTemp")
+		    	 		continue;
+		    	 	var id="#"+key;
+		    	 	var content=$(id).text()+":";
+		    	 	content+=ret[key];
+		    	 	$(id).text(content);
+		    	 }
+		    	 $("#city").text(ret['city']);
+		    	 $("#date").text(myDate.toLocaleDateString());
+		    	 var html="";
+		    	 var imgsrc="";
+		    	 var a="1";
+		    	 if(myDate.getHours()>=6 && myDate.getHours()<=18){
+		    	 	imgsrc=ret['dayImg'];
+		    	 }else{
+		    	 	imgsrc=ret['nightImg'];
+		    	 }
+  		    	 html+="<div><img src='"+imgsrc+"' /><span style='float:right;margin-top:1px;margin-left:10px;'>"+ret['nowTemp']+"℃</span></div>";
+		    	 $("#nowTemp").html(html);    
+		    }else{
+		          layer.alert(data.msg,5,!1);
+		        }
+		    }
+	});	
+}
+
+function exportBookMark(){
+	var dataArgs=$("#marklist  input[type=checkbox]:checked").serialize();
+    dataArgs+="&class=operate&func=exportBookMark";
+    window.open('/operate/controller.php?'+dataArgs);
+}
+
+function exportBookMarkAll(){
+    window.open('/operate/controller.php?class=operate&func=exportBookMark&all=1&mark_id[]=0');
+}
+
+function showAllnote(url_id,o){
+   var id="#note_"+url_id;
+   var is_show=$(o).attr("data-show");
+   if(is_show=="false")
+	   $.ajax({
+	         type: "POST",
+	         url: "/operate/controller.php",
+	         data: {url_id:url_id,class:'operate',func:'showAllnote'},
+	         dataType: "json",
+	         success: function(data){
+		            if(data.status==0){
+		            	if(data.data['note']!=""){
+			              var shortnote = $(id).text();
+			              var fun="changeNote("+url_id+",this);";
+			              $(o).attr("data-shortnote",shortnote);
+		            	  $(id).text(data.data['note']);
+		            	  $(id).attr("onclick",fun);
+  		            	  $(o).attr("data-show","true");
+		            	  $(o).text("Σ( ° △ °)");
+		            	}else{
+//		            	  var shortnote = $(id).text();
+			              var fun="changeNote("+url_id+",this);";
+//			              $(o).attr("data-shortnote",shortnote);
+		            	  $(id).text("你好像很懒，什么都没留下。。。");
+		            	  $(id).attr("onclick",fun);
+  		            	  $(o).attr("data-show","true");
+		            	  $(o).text("Σ( ° △ °)");
+		            	}
+
+	//    			  setTimeout("location.href='/ucenter.html';",2000); 
+		            }else{
+		              layer.alert(data.msg,5,!1);
+		            }
+	        }
+	     });
+	else{
+		var note=$(o).attr("data-shortnote");
+		if(note=="")
+			note="　　";//两个全角空格会认为是字符，可以用来输出空行
+		$(id).text(note);
+		$(o).attr("data-show","false");
+		$(o).text("(っ﹏-) .｡o");
+		$(id).removeAttr("onclick");
+		changeNoteSave(url_id);
+	}
+}
+
+
+function changeNote(url_id,o){
+	var note=$(o).text();
+	var html='<div id="chmarkNote" class="col-lg-12 segmentation"><textarea class="form-control chmarkNote" name="chmarkNote" >'+note+'</textarea></div>';
+	$(o).hide();
+	$(o).after(html);
+	$("#chmarkNote").find("textarea").css("height","200px");
+}
+
+function changeNoteSave(url_id){
+	var id="#note_"+url_id;
+	if($("#chmarkNote").length>0){
+//		此时只能取val，而不能用text，否则新增加的内容无法传递 2014-04-27 12:30 Huajie
+		var note = $("#chmarkNote").find("textarea").val();
+		$.ajax({
+	         type: "POST",
+	         url: "/operate/controller.php",
+	         data: {url_id:url_id,note:note,class:'operate',func:'changeNoteSave'},
+	         dataType: "json",
+	         success: function(data){
+		            if(data.status==0){
+		            	layer.msg(data.msg , 3, 1);
+						$("#chmarkNote").remove();
+						
+						$(id).text(note==""?'　　':note.substr(0,20));
+						$(id).show();
+		            }else{
+		              layer.alert(data.msg,5,!1);
+		            }
+	        }
+	     });	
+	}
+}
+
+function showUserInfo(){
+	var ret="";
+	$.ajax({
+         type: "POST",
+         async:false,
+         url: "/operate/controller.php",
+         data: {class:'operate',func:'getUserInfo'},
+         dataType: "json",
+         success: function(data){
+	            if(data.status==0){
+	            	ret=data.data;
+	            }else{
+	              layer.alert(data.msg,5,!1);
+	            }
+        }
+     });
+	$("#marklist").html("");
+	var html="<form action='' id=user_info_form>";
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12 myBorder "><div class="listTitle col-2 col-sm-2 col-lg-2">用户名</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control" name="user_name" type="text" value="'+ret['username']+'"></div><div class="listTitle col-2 col-sm-2 col-lg-2">出生年月</div><div class="col-4 col-sm-4 col-lg-4 date form_datetime"><input size="16" class="form-control" type="text" name="birthday" value="'+(ret['birthday']==null?'':ret['birthday'])+'" readonly><span class="add-on"><i class="icon-th"></i></span></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12 "><div class="listTitle col-2 col-sm-2 col-lg-2">性别</div><div class="col-4 col-sm-4 col-lg-4"><input name="sex" type="radio" value="1"><span class="font_gray fontlarge b segmentation_r">男</span><input name="sex" type="radio" value="2"><span class="font_gray fontlarge b segmentation_r">女</span><input name="sex" type="radio" value="3"><span class="font_gray fontlarge b segmentation_r">秀吉</span></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12 myBorder "><div class="listTitle col-2 col-sm-2 col-lg-2">注册邮箱</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control" name="reg_email" readonly type="text" value="'+ret['email']+'"></div><div class="listTitle col-2 col-sm-2 col-lg-2">密保邮箱</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control" name="bind_email" type="text" value="'+(ret['bind_email']==null?'':ret['bind_email'])+'"></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12 myBorder "><div class="listTitle col-2 col-sm-2 col-lg-2">密码</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control" readonly type="text" value="据说这行是密码哎！你相信吗？"><!--你居然不相信！这行真的是密码呀！密码是mosquito 什么？你问为什么是蚊子？嗯，这是一个很有趣的问题， 因为她有一种神奇的力量啊>_<--></div><div class="listTitle col-2 col-sm-2 col-lg-2"><button class="btn btn-primary btn-block" type="button" onclick="showChangePassword();">修改密码</button></div></div>';
+	html+='<div id="changePassword" style="display:none;"><div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-2 col-sm-2 col-lg-2">原密码</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control"  type="password" name="password_prev" value=""></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-2 col-sm-2 col-lg-2">现密码</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control"  type="password" name="password_new" value=""></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-2 col-sm-2 col-lg-2">确认密码</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control"  type="password" name="password_check" value=""></div></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-2 col-sm-2 col-lg-2">密保问题</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control"  type="text" name="find_password_q" value="'+(ret['find_pwd_q']==null?'':ret['find_pwd_q'])+'"></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-2 col-sm-2 col-lg-2">答案</div><div class="col-4 col-sm-4 col-lg-4"><input size="16" class="form-control"  type="text" name="find_password_a" value="'+(ret['find_pwd_a']==null?'':ret['find_pwd_a'])+'"></div></div>';
+	html+='<div class="segmentation col-12 col-sm-12 col-lg-12  "><div class="listTitle col-6 col-sm-6 col-lg-6"><button class="btn btn-primary btn-block" type="button" onclick="saveUserInfo();">保存</button></div></div>';
+	html+="</form>";
+	$("#marklist").html(html);
+	
+	if(ret['sex']==null){
+		$("input[type=radio]").eq(0).attr("checked","ckecked");
+	}else{
+		var sex=parseInt(ret['sex'])-1;
+		$("input[type=radio]").eq(sex).attr("checked","ckecked");		
+	}
+	$(".form_datetime").datetimepicker({
+                language:  'zh-CN',
+		        weekStart: 1,
+		        todayBtn:  1,
+				autoclose: 1,
+				todayHighlight: 1,
+				startView: 2,
+				minView: 2,
+				forceParse: 0,
+				format: 'yyyy-mm-dd'
+    });
+}
+
+
+function showChangePassword(){
+	$("#changePassword").toggle();
+}
+
+function saveUserInfo(){
+	var dataArgs=$("#user_info_form").serialize();
+    dataArgs+="&class=operate&func=saveUserInfo";
+	$.ajax({
+         type: "POST",
+         async:false,
+         url: "/operate/controller.php",
+         data: dataArgs,
+         dataType: "json",
+         success: function(data){
+	            if(data.status==0){
+	            	layer.msg(data.msg , 3, 1);
+              		logout(); 
+	            }else{
+	              layer.alert(data.msg,5,!1);
+	            }
+        }
+     });
 }
